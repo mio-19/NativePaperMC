@@ -136,7 +136,7 @@ buildtimeinits="$buildtimeinits protocolsupport.protocol.utils.minecraftdata.Min
 # FAWE
 buildtimeinits="$buildtimeinits com.sk89q.worldedit.command.util.annotation"
 # Negativity
-buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats "'com.elikill58.negativity.universal.Stats$StatsType'
+buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.elikill58.negativity.spigot.timers.TimerAnalyzePacket "'com.elikill58.negativity.universal.Stats$StatsType'
 # "-H:+UseLowLatencyGC" requires GraalVM Enterprise, so not enabled
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
