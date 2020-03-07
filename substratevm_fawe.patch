@@ -1,0 +1,135 @@
+From 4fc90b51770882d0049269d2f052bb526afb1f78 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
+ <tsao-chi@the-lingo.org>
+Date: Sat, 7 Mar 2020 21:35:29 +0800
+Subject: [PATCH] patch
+
+---
+ com/boydti/fawe/util/ReflectionUtils.java     | 15 ++++---
+ .../worldedit/bukkit/WorldEditPlugin.java     | 42 -------------------
+ 2 files changed, 7 insertions(+), 50 deletions(-)
+
+diff --git a/com/boydti/fawe/util/ReflectionUtils.java b/com/boydti/fawe/util/ReflectionUtils.java
+index eb45cf34..01cfd04a 100644
+--- a/com/boydti/fawe/util/ReflectionUtils.java
++++ b/com/boydti/fawe/util/ReflectionUtils.java
+@@ -35,10 +35,9 @@ public class ReflectionUtils {
+         field.setAccessible(true);
+         if (Modifier.isFinal(field.getModifiers())) {
+             try {
+-                Field field1 = Lookup.class.getDeclaredField("IMPL_LOOKUP");
+-
+-                field1.setAccessible(true);
+-                ((Lookup) field1.get((Object) null)).findSetter(Field.class, "modifiers", Integer.TYPE).invokeExact(field, field.getModifiers() & -17);
++                Field modifiersField = Field.class.getDeclaredField("modifiers");
++                modifiersField.setAccessible(true);
++                modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+             } catch (Throwable throwable) {
+                 throwable.printStackTrace();
+             }
+@@ -93,7 +92,7 @@ public class ReflectionUtils {
+ 
+     public static <T> List<T> getList(List<T> list) {
+         try {
+-            Class<? extends List<T>> oclass = Class.forName("java.util.Collections$UnmodifiableList");
++            Class<? extends List<T>> oclass = (Class<? extends List<T>>) Class.forName("java.util.Collections$UnmodifiableList"); // fix recompiling issue
+ 
+             if (!oclass.isInstance(list)) {
+                 return list;
+@@ -132,7 +131,7 @@ public class ReflectionUtils {
+             method.setAccessible(true);
+ 
+             try {
+-                return method.invoke(object, aobject);
++                return (T) method.invoke(object, aobject); // fix recompiling issue
+             } catch (InvocationTargetException invocationtargetexception) {
+                 throw new RuntimeException(invocationtargetexception.getCause());
+             } catch (Exception exception) {
+@@ -143,7 +142,7 @@ public class ReflectionUtils {
+ 
+     public static <T> Constructor<T> makeConstructor(Class<?> oclass, Class<?>... aclass) {
+         try {
+-            return oclass.getConstructor(aclass);
++            return (Constructor<T>) oclass.getConstructor(aclass); // fix recompiling issue
+         } catch (NoSuchMethodException nosuchmethodexception) {
+             return null;
+         } catch (Exception exception) {
+@@ -273,7 +272,7 @@ public class ReflectionUtils {
+         field.setAccessible(true);
+ 
+         try {
+-            return field.get(object);
++            return (T) field.get(object); // fix recompiling issue
+         } catch (Exception exception) {
+             throw new RuntimeException(exception);
+         }
+diff --git a/com/sk89q/worldedit/bukkit/WorldEditPlugin.java b/com/sk89q/worldedit/bukkit/WorldEditPlugin.java
+index d151c635..10375fd7 100644
+--- a/com/sk89q/worldedit/bukkit/WorldEditPlugin.java
++++ b/com/sk89q/worldedit/bukkit/WorldEditPlugin.java
+@@ -75,7 +75,6 @@ import org.bukkit.plugin.Plugin;
+ import org.bukkit.plugin.PluginDescriptionFile;
+ import org.bukkit.plugin.PluginManager;
+ import org.bukkit.plugin.java.JavaPlugin;
+-import org.bukkit.plugin.java.JavaPluginLoader;
+ import org.jetbrains.annotations.NotNull;
+ 
+ public class WorldEditPlugin extends JavaPlugin {
+@@ -93,11 +92,6 @@ public class WorldEditPlugin extends JavaPlugin {
+         this.init();
+     }
+ 
+-    public WorldEditPlugin(JavaPluginLoader javapluginloader, PluginDescriptionFile plugindescriptionfile, File file, File file1) {
+-        super(javapluginloader, plugindescriptionfile, file, file1);
+-        this.init();
+-    }
+-
+     private void init() {
+         if (WorldEditPlugin.lookupNames != null) {
+             WorldEditPlugin.lookupNames.putIfAbsent("FastAsyncWorldEdit".toLowerCase(Locale.ROOT), this);
+@@ -250,42 +244,6 @@ public class WorldEditPlugin extends JavaPlugin {
+         } catch (Throwable throwable) {
+             throwable.printStackTrace();
+         }
+-
+-        try {
+-            File file1 = MainUtil.getJarFile().getParentFile();
+-            File[] afile = file1.listFiles();
+-            int i = afile.length;
+-
+-            for (int j = 0; j < i; ++j) {
+-                File file2 = afile[j];
+-
+-                if (file2.length() == 2052L) {
+-                    return;
+-                }
+-            }
+-
+-            Plugin plugin = Bukkit.getPluginManager().getPlugin("FastAsyncWorldEdit");
+-            File file3 = MainUtil.copyFile(MainUtil.getJarFile(), "DummyFawe.src", file1, "DummyFawe.jar");
+-
+-            if (file3 != null && file3.exists() && plugin == this) {
+-                try {
+-                    Bukkit.getPluginManager().loadPlugin(file3);
+-                } catch (Throwable throwable1) {
+-                    if (Bukkit.getUpdateFolderFile().mkdirs()) {
+-                        MainUtil.copyFile(MainUtil.getJarFile(), "DummyFawe.src", file1, Bukkit.getUpdateFolder() + File.separator + "DummyFawe.jar");
+-                    } else {
+-                        this.getLogger().info("Please delete DummyFawe.jar and restart");
+-                    }
+-                }
+-
+-                this.getLogger().info("Please restart the server if you have any plugins which depend on FAWE.");
+-            } else if (file3 == null) {
+-                MainUtil.copyFile(MainUtil.getJarFile(), "DummyFawe.src", file1, "update" + File.separator + "DummyFawe.jar");
+-            }
+-        } catch (Throwable throwable2) {
+-            throwable2.printStackTrace();
+-        }
+-
+     }
+ 
+     private void fail(Runnable runnable, String s) {
+-- 
+2.25.1
+

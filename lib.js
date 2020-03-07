@@ -197,7 +197,7 @@ public class ProcessOneClass {
       var pluginDescriptionPath = pluginYmlAndClass[0];
       var clazzPath = pluginYmlAndClass[1];
       var pdf = new PluginDescriptionFile(Files.newInputStream(Paths.get(pluginDescriptionPath)));
-      System.out.println("processing " + clazzPath + " (plugin.yml: " + pluginDescriptionPath + ") ...");
+      //System.out.println("processing " + clazzPath + " (plugin.yml: " + pluginDescriptionPath + ") ...");
       byte[] clazz = Files.readAllBytes(Paths.get(clazzPath));
       byte[] result = Commodore.convert(clazz, !CraftMagicNumbers.isLegacy(pdf));
       Files.newOutputStream(Paths.get(clazzPath)).write(result);
@@ -363,10 +363,16 @@ public class GetVersion {
       patches.push("substratevm_protocolsupport.patch")}
 
     // com.oracle.svm.core.jdk.UnsupportedFeatureError: Unsupported method java.lang.invoke.MemberName.getInvocationType() is reachable: All methods from java.lang.invoke should have been replaced during image building.
+    // WorldEdit and FAWE
     if(await exists("org/enginehub/piston/converter/ArgumentConverters.class")){
       classes_to_patch.push("org/enginehub/piston/converter/ArgumentConverters")
       classes_has_nested_classes.push("org/enginehub/piston/converter/ArgumentConverters")
       patches.push("substratevm_enginehub.patch")}
+    // FAWE only
+    if(await exists("com/boydti/fawe/util/ReflectionUtils.class")){
+      classes_to_patch.push("com/boydti/fawe/util/ReflectionUtils", "com/sk89q/worldedit/bukkit/WorldEditPlugin")
+      classes_has_nested_classes.push("com/boydti/fawe/util/ReflectionUtils", "com/sk89q/worldedit/bukkit/WorldEditPlugin")
+      patches.push("substratevm_fawe.patch")}
 
     await rm("-fr", paths_simply_remove)
 
