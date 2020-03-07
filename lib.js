@@ -7,12 +7,10 @@ function lines(x){
 // https://stackoverflow.com/questions/34887973/how-to-create-a-partition-function-in-javascript-using-the-following-guidelines/34890630#34890630
 function partition(arr, filter) {
   var fail = [];
-
   var pass = arr.filter((e, i, a) => {
     if (filter(e, i, a)) return true;
     fail.push(e);
   });
-
   return [pass, fail];
 }
 
