@@ -145,7 +145,7 @@ buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.eli
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
 native-image -cp papermc.jar \
-  --no-server -J-Xms10G -J-Xmx20G \
+  --no-server -J-Xms10G -J-Xmx19G \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
   -Dfile.encoding=UTF-8 \
