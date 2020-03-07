@@ -80,7 +80,7 @@ async function execaToStdIO(...args){
 
 async function librarify_papermc(){
   //await librarify_papermc_patch_worldedit()
-  //await librarify_papermc_patch_fawe()
+  await librarify_papermc_patch_fawe()
   await librarify_papermc_patch_QualityArmoryVehicles()
   await plugins_processClass()
   await librarify_papermc_main()
@@ -134,7 +134,7 @@ public class BukkitImplLoader {
     await execaToStdIO("7z", ["a", "-r", "../dist/plugins/WorldEdit.jar", "."])
   await popd()
   await rm("-fr", "tmp")}*/
-/*async function librarify_papermc_patch_fawe(){
+async function librarify_papermc_patch_fawe(){
   await rm("-fr", "tmp")
   await mkdir("tmp")
   await pushd("tmp")
@@ -180,7 +180,7 @@ public class BukkitImplLoader {
     await rm("com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java", "DummyFawe.src", "../dist/plugins/FastAsyncWorldEdit.jar")
     await execaToStdIO("7z", ["a", "-r", "../dist/plugins/FastAsyncWorldEdit.jar", "."])
   await popd()
-  await rm("-fr", "tmp")}*/
+  await rm("-fr", "tmp")}
 // org/bukkit/plugin/java/PluginClassLoader.java Class<?> findClass(@NotNull String s, boolean flag):
 // server.getUnsafe().processClass(this.description, s1, abyte)
 // org/bukkit/craftbukkit/util/CraftMagicNumbers.java public byte[] processClass(PluginDescriptionFile pdf, String path, byte[] clazz):
