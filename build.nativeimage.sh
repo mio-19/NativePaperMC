@@ -39,6 +39,8 @@ java -agentlib:native-image-agent=experimental-class-loader-support,config-outpu
   grep '^net/minecraft/server/v1_15_R1/Packet.*\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../packets_classes
 7z l -ba -slt papermc.jar | grep '^Path ' | awk '{print $3;}' |
   grep '^protocolsupport/.*\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../protocolsupport_classes
+7z l -ba -slt papermc.jar | grep '^Path ' | awk '{print $3;}' |
+  grep '^org/bukkit/event/.*Event\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../lukkit_event_classes
 node << 'EOF'
 const fs = require('fs')
 const path = 'nativeimage-build-config/reflect-config.json'
@@ -100,6 +102,11 @@ reflconf["net.minecraft.server.v1_15_R1.PlayerChunkMap"] = {
   "fields": [
     { "name": "trackedEntities", "allowWrite": true }]}
 // ProtocolSupport End
+for(const x of lines_of('../lukkit_event_classes')) {
+  reflconf[x].methods = reflconf[x].methods || []
+  const found = reflconf[x].methods.map(x=>x.name==="getHandlerList"&&x.parameterTypes.length===0).reduce(((x,y)=>x||y),false)
+  if(!found) {
+    reflconf[x].methods.push({"name": "getHandlerList", "parameterTypes": [] })}}
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
   "fields": [
