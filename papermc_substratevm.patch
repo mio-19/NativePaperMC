@@ -1,0 +1,184 @@
+From 36619ae19aa3fc73119ba7a203bc71828ffc01ae Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
+ <tsao-chi@the-lingo.org>
+Date: Fri, 6 Mar 2020 18:51:52 +0800
+Subject: [PATCH] patch
+
+---
+ .../server/v1_15_R1/ResourcePackVanilla.java  | 70 ++++++++-----------
+ org/bukkit/craftbukkit/Main.java              | 25 +------
+ .../craftbukkit/v1_15_R1/CraftServer.java     |  2 +-
+ 3 files changed, 33 insertions(+), 64 deletions(-)
+
+diff --git a/net/minecraft/server/v1_15_R1/ResourcePackVanilla.java b/net/minecraft/server/v1_15_R1/ResourcePackVanilla.java
+index 4816aef0..e763569c 100644
+--- a/net/minecraft/server/v1_15_R1/ResourcePackVanilla.java
++++ b/net/minecraft/server/v1_15_R1/ResourcePackVanilla.java
+@@ -31,43 +31,11 @@ import javax.annotation.Nullable;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public class ResourcePackVanilla implements IResourcePack {
++public final class ResourcePackVanilla implements IResourcePack {
+ 
+     public static Path a;
+     private static final Logger LOGGER = LogManager.getLogger();
+     public static Class<?> b;
+-    private static final Map<EnumResourcePackType, FileSystem> e = (Map) SystemUtils.a(Maps.newHashMap(), (hashmap) -> {
+-        Class oclass = ResourcePackVanilla.class;
+-
+-        synchronized (ResourcePackVanilla.class) {
+-            EnumResourcePackType[] aenumresourcepacktype = EnumResourcePackType.values();
+-            int i = aenumresourcepacktype.length;
+-
+-            for (int j = 0; j < i; ++j) {
+-                EnumResourcePackType enumresourcepacktype = aenumresourcepacktype[j];
+-                URL url = ResourcePackVanilla.class.getResource("/" + enumresourcepacktype.a() + "/.mcassetsroot");
+-
+-                try {
+-                    URI uri = url.toURI();
+-
+-                    if ("jar".equals(uri.getScheme())) {
+-                        FileSystem filesystem;
+-
+-                        try {
+-                            filesystem = FileSystems.getFileSystem(uri);
+-                        } catch (FileSystemNotFoundException filesystemnotfoundexception) {
+-                            filesystem = FileSystems.newFileSystem(uri, Collections.emptyMap());
+-                        }
+-
+-                        hashmap.put(enumresourcepacktype, filesystem);
+-                    }
+-                } catch (IOException | URISyntaxException urisyntaxexception) {
+-                    ResourcePackVanilla.LOGGER.error("Couldn't get a list of all vanilla resources", urisyntaxexception);
+-                }
+-            }
+-
+-        }
+-    });
+     public final Set<String> c;
+ 
+     public ResourcePackVanilla(String... astring) {
+@@ -147,10 +115,8 @@ public class ResourcePackVanilla implements IResourcePack {
+                 Path path = Paths.get(url1.toURI());
+ 
+                 a(set, i, s, path, s1, predicate);
+-            } else if ("jar".equals(uri.getScheme())) {
+-                Path path1 = ((FileSystem) ResourcePackVanilla.e.get(enumresourcepacktype)).getPath("/" + enumresourcepacktype.a());
+-
+-                a(set, i, "minecraft", path1, s1, predicate);
++            } else if ("resource".equals(uri.getScheme()) || "jar".equals(uri.getScheme())) { // resource: native image
++                loadHardcodedBuiltinMinecraftData(enumresourcepacktype.a(), set, i, s1, predicate);
+             } else {
+                 ResourcePackVanilla.LOGGER.error("Unsupported scheme {} trying to list vanilla resources (NYI?)", uri);
+             }
+@@ -163,6 +129,31 @@ public class ResourcePackVanilla implements IResourcePack {
+         return set;
+     }
+ 
++    private static final String[] hardcodedBuiltinMinecraftData_assets = {}; // REPLACE_THIS_LINE_HARDCODED_DATA_assets
++    private static final String[] hardcodedBuiltinMinecraftData_data = {}; // REPLACE_THIS_LINE_HARDCODED_DATA_data
++    private static void loadHardcodedBuiltinMinecraftData(String dir, Collection<MinecraftKey> collection, int i, String s1, Predicate<String> predicate) throws IOException {
++        String s = "minecraft";
++        if (i < 3) {
++            throw new AssertionError(Integer.toString(i) + " too small, at least 3");
++        }
++        String[] paths;
++        String base;
++        if ("assets".equals(dir)) {
++            paths = hardcodedBuiltinMinecraftData_assets;
++            base = "assets";
++        } else if ("data".equals(dir)) {
++            paths = hardcodedBuiltinMinecraftData_data;
++            base = "data";
++        } else {
++            throw new AssertionError("Unsupported dir " + dir);
++        }
++        java.util.Arrays.stream(paths)
++          .filter(x -> x.startsWith(s1+"/"))
++          .filter(x -> predicate.test(org.bukkit.craftbukkit.libs.org.apache.commons.io.FilenameUtils.getName(x)))
++          .map(x -> new MinecraftKey(s, x))
++          .forEach(collection::add);
++    }
++
+     private static void a(Collection<MinecraftKey> collection, int i, String s, Path path, String s1, Predicate<String> predicate) throws IOException {
+         Path path1 = path.resolve(s);
+         Stream<Path> stream = Files.walk(path1.resolve(s1), i, new FileVisitOption[0]);
+@@ -224,7 +215,8 @@ public class ResourcePackVanilla implements IResourcePack {
+     }
+ 
+     private static boolean a(String s, @Nullable URL url) throws IOException {
+-        return url != null && (url.getProtocol().equals("jar") || ResourcePackFolder.a(new File(url.getFile()), s));
++        // native image : url.getProtocol().equals("resource")
++        return url != null && (url.getProtocol().equals("resource") || url.getProtocol().equals("jar") || ResourcePackFolder.a(new File(url.getFile()), s));
+     }
+ 
+     @Nullable
+@@ -284,7 +276,7 @@ public class ResourcePackVanilla implements IResourcePack {
+ 
+             }
+ 
+-            return object;
++            return (T) object; // fix recompiling issue
+         } catch (FileNotFoundException | RuntimeException runtimeexception) {
+             return null;
+         }
+diff --git a/org/bukkit/craftbukkit/Main.java b/org/bukkit/craftbukkit/Main.java
+index cf6218b0..ccda7cea 100644
+--- a/org/bukkit/craftbukkit/Main.java
++++ b/org/bukkit/craftbukkit/Main.java
+@@ -67,7 +67,7 @@ public class Main {
+ 
+         if (optionset != null && !optionset.has("?")) {
+             if (optionset.has("v")) {
+-                System.out.println(CraftServer.class.getPackage().getImplementationVersion());
++                System.out.println(REPLACE_THIS_EXPRESSION_WITH_IMPLEMENTATION_VERSION);
+             } else {
+                 String s = (new File(".")).getAbsolutePath();
+ 
+@@ -97,29 +97,6 @@ public class Main {
+                         System.setProperty("terminal.jline", "false");
+                     }
+ 
+-                    if (Main.class.getPackage().getImplementationVendor() != null && System.getProperty("IReallyKnowWhatIAmDoingISwear") == null) {
+-                        Date date = (new SimpleDateFormat("yyyyMMdd-HHmm")).parse(Main.class.getPackage().getImplementationVendor());
+-                        Calendar calendar = Calendar.getInstance();
+-
+-                        calendar.add(6, -14);
+-                        if (date.before(calendar.getTime())) {
+-                            System.err.println("*** Warning, you've not updated in a while! ***");
+-                            System.err.println("*** Please download a new build as per instructions from https://papermc.io/downloads ***");
+-                        }
+-                    }
+-
+-                    RuntimeMXBean runtimemxbean = ManagementFactory.getRuntimeMXBean();
+-                    OperatingSystemMXBean operatingsystemmxbean = ManagementFactory.getOperatingSystemMXBean();
+-
+-                    if (runtimemxbean != null && operatingsystemmxbean != null) {
+-                        String s1 = "Java " + runtimemxbean.getSpecVersion() + " (" + runtimemxbean.getVmName() + " " + runtimemxbean.getVmVersion() + ")";
+-                        String s2 = "Host: " + operatingsystemmxbean.getName() + " " + operatingsystemmxbean.getVersion() + " (" + operatingsystemmxbean.getArch() + ")";
+-
+-                        System.out.println("System Info: " + s1 + " " + s2);
+-                    } else {
+-                        System.out.println("Unable to read system info");
+-                    }
+-
+                     System.setProperty("library.jansi.version", "Paper");
+                     System.out.println("Loading libraries, please wait...");
+                     MinecraftServer.main(optionset);
+diff --git a/org/bukkit/craftbukkit/v1_15_R1/CraftServer.java b/org/bukkit/craftbukkit/v1_15_R1/CraftServer.java
+index c4f231ea..7e73132a 100644
+--- a/org/bukkit/craftbukkit/v1_15_R1/CraftServer.java
++++ b/org/bukkit/craftbukkit/v1_15_R1/CraftServer.java
+@@ -336,7 +336,7 @@ public final class CraftServer implements Server {
+                 return entityplayer.getBukkitEntity();
+             }
+         }));
+-        this.serverVersion = CraftServer.class.getPackage().getImplementationVersion();
++        this.serverVersion = REPLACE_THIS_EXPRESSION_WITH_IMPLEMENTATION_VERSION;
+         Bukkit.setServer(this);
+         Enchantments.DAMAGE_ALL.getClass();
+         Enchantment.stopAcceptingRegistrations();
+-- 
+2.25.1
+

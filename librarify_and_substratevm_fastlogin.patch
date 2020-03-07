@@ -1,0 +1,113 @@
+From 71e0002294b2509719799a2278f11be9879e906f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
+ <tsao-chi@the-lingo.org>
+Date: Mon, 2 Mar 2020 20:03:07 +0800
+Subject: [PATCH] patch
+
+---
+ .../craftapi/cache/SafeCacheBuilder.java      |  9 ++++--
+ .../fastlogin/core/shared/FastLoginCore.java  | 28 +++++++++----------
+ 2 files changed, 19 insertions(+), 18 deletions(-)
+
+diff --git a/com/github/games647/craftapi/cache/SafeCacheBuilder.java b/com/github/games647/craftapi/cache/SafeCacheBuilder.java
+index 56734c0e..5cb3207c 100644
+--- a/com/github/games647/craftapi/cache/SafeCacheBuilder.java
++++ b/com/github/games647/craftapi/cache/SafeCacheBuilder.java
+@@ -13,7 +13,7 @@ public class SafeCacheBuilder<K, V> {
+     private static Method BUILD_METHOD;
+     private static Method AS_MAP_METHOD;
+     private static Method MAXIMUM_SIZE_METHOD;
+-    private final CacheBuilder<K, V> builder = CacheBuilder.newBuilder();
++    private final CacheBuilder<K, V> builder = (CacheBuilder<K, V>) CacheBuilder.newBuilder(); // fix recompiling issue
+ 
+     public static <K, V> SafeCacheBuilder<K, V> newBuilder() {
+         return new SafeCacheBuilder<>();
+@@ -42,18 +42,21 @@ public class SafeCacheBuilder<K, V> {
+     }
+ 
+     public SafeCacheBuilder<K, V> maximumSize(int i) {
++        boolean isLong;
+         try {
+             SafeCacheBuilder.MAXIMUM_SIZE_METHOD = this.builder.getClass().getDeclaredMethod("maximumSize", Long.TYPE);
++            isLong = true;
+         } catch (NoSuchMethodException nosuchmethodexception) {
+             try {
+                 SafeCacheBuilder.MAXIMUM_SIZE_METHOD = this.builder.getClass().getDeclaredMethod("maximumSize", Integer.TYPE);
++                isLong = false;
+             } catch (NoSuchMethodException nosuchmethodexception1) {
+                 throw new IllegalStateException("Unable to find CacheBuilder.maximumSize(Int|Long)", nosuchmethodexception1);
+             }
+         }
+ 
+         try {
+-            SafeCacheBuilder.MAXIMUM_SIZE_METHOD.invoke(this.builder, i);
++            SafeCacheBuilder.MAXIMUM_SIZE_METHOD.invoke(this.builder, isLong?new Long(i):new Integer(i));
+             return this;
+         } catch (Exception exception) {
+             throw new IllegalStateException("Unable to invoke CacheBuilder.maximumSize(Int|Long)", exception);
+@@ -62,7 +65,7 @@ public class SafeCacheBuilder<K, V> {
+ 
+     public <K1 extends K, V1 extends V> SafeCacheBuilder<K1, V1> removalListener(RemovalListener<? super K1, ? super V1> removallistener) {
+         this.builder.removalListener(removallistener);
+-        return this;
++        return (SafeCacheBuilder<K1, V1>) this; // fix recompiling issue
+     }
+ 
+     public SafeCacheBuilder<K, V> ticker(Ticker ticker) {
+diff --git a/com/github/games647/fastlogin/core/shared/FastLoginCore.java b/com/github/games647/fastlogin/core/shared/FastLoginCore.java
+index b33b43cb..ebcaf381 100644
+--- a/com/github/games647/fastlogin/core/shared/FastLoginCore.java
++++ b/com/github/games647/fastlogin/core/shared/FastLoginCore.java
+@@ -60,20 +60,18 @@ public class FastLoginCore<P extends C, C, T extends PlatformPlugin<C>> {
+         try {
+             this.config = this.loadFile("config.yml");
+             Configuration configuration = this.loadFile("messages.yml");
+-            Stream stream = configuration.getKeys().stream().filter((s) -> {
+-                return configuration.get(s) != null;
+-            });
+-            Function function = Function.identity();
+ 
+-            configuration.getClass();
+-            ((Map) stream.collect(Collectors.toMap(function, configuration::get))).forEach((s, object) -> {
+-                String s1 = CommonUtil.translateColorCodes((String) object);
+-
+-                if (!s1.isEmpty()) {
+-                    this.localeMessages.put(s, s1.replace("/newline", "\n"));
+-                }
+-
+-            });
++             // fix recompiling issue
++            configuration.getKeys()
++                    .stream()
++                    .filter(s -> configuration.get(s) != null)
++                    .collect(Collectors.toMap(Function.identity(), configuration::get))
++                    .forEach((s, object) -> {
++                        String s1 = CommonUtil.translateColorCodes((String) object);
++                        if (!s1.isEmpty()) {
++                            this.localeMessages.put(s, s1.replace("/newline", "\n"));
++                        }
++                    });
+         } catch (IOException ioexception) {
+             this.plugin.getLog().error("Failed to load yaml files", ioexception);
+         }
+@@ -103,7 +101,7 @@ public class FastLoginCore<P extends C, C, T extends PlatformPlugin<C>> {
+ 
+     private Configuration loadFile(String s) throws IOException {
+         ConfigurationProvider configurationprovider = ConfigurationProvider.getProvider(YamlConfiguration.class);
+-        InputStream inputstream = this.getClass().getClassLoader().getResourceAsStream(s);
++        InputStream inputstream = ((org.bukkit.plugin.Plugin) this.plugin).getResource(s);
+         Throwable throwable = null;
+ 
+         Configuration configuration;
+@@ -270,7 +268,7 @@ public class FastLoginCore<P extends C, C, T extends PlatformPlugin<C>> {
+             Path path1 = path.resolve(s);
+ 
+             if (Files.notExists(path1, new LinkOption[0])) {
+-                InputStream inputstream = this.getClass().getClassLoader().getResourceAsStream(s);
++                InputStream inputstream = ((org.bukkit.plugin.Plugin) this.plugin).getResource(s);
+                 Throwable throwable = null;
+ 
+                 try {
+-- 
+2.25.1
+

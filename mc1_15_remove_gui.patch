@@ -1,0 +1,382 @@
+From dbd963919c9ea94d251d8035c51d26789890db88 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
+ <tsao-chi@the-lingo.org>
+Date: Wed, 19 Feb 2020 18:50:27 +0800
+Subject: [PATCH] patch
+
+---
+ .../server/v1_15_R1/DedicatedServer.java      |  12 +-
+ .../server/v1_15_R1/GuiStatsComponent.java    |  87 --------
+ .../server/v1_15_R1/PlayerListBox.java        |  28 ---
+ net/minecraft/server/v1_15_R1/ServerGUI.java  | 190 ------------------
+ 4 files changed, 1 insertion(+), 316 deletions(-)
+ delete mode 100644 net/minecraft/server/v1_15_R1/GuiStatsComponent.java
+ delete mode 100644 net/minecraft/server/v1_15_R1/PlayerListBox.java
+ delete mode 100644 net/minecraft/server/v1_15_R1/ServerGUI.java
+
+diff --git a/net/minecraft/server/v1_15_R1/DedicatedServer.java b/net/minecraft/server/v1_15_R1/DedicatedServer.java
+index 7ea0e368..7e50f4cc 100644
+--- a/net/minecraft/server/v1_15_R1/DedicatedServer.java
++++ b/net/minecraft/server/v1_15_R1/DedicatedServer.java
+@@ -55,8 +55,6 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
+     private RemoteControlListener remoteControlListener;
+     public DedicatedServerSettings propertyManager;
+     private EnumGamemode o;
+-    @Nullable
+-    private ServerGUI p;
+ 
+     public DedicatedServer(OptionSet optionset, DedicatedServerSettings dedicatedserversettings, DataFixer datafixer, YggdrasilAuthenticationService yggdrasilauthenticationservice, MinecraftSessionService minecraftsessionservice, GameProfileRepository gameprofilerepository, UserCache usercache, WorldLoadListenerFactory worldloadlistenerfactory, String s) {
+         super(optionset, Proxy.NO_PROXY, datafixer, (new CommandDispatcher()).init(true), yggdrasilauthenticationservice, minecraftsessionservice, gameprofilerepository, usercache, worldloadlistenerfactory, s);
+@@ -328,10 +326,6 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
+     }
+ 
+     public void exit() {
+-        if (this.p != null) {
+-            this.p.b();
+-        }
+-
+         if (this.remoteControlListener != null) {
+             this.remoteControlListener.b();
+         }
+@@ -413,14 +407,10 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
+     }
+ 
+     public void bc() {
+-        if (this.p == null) {
+-            this.p = ServerGUI.a(this);
+-        }
+-
+     }
+ 
+     public boolean aj() {
+-        return this.p != null;
++        return false;
+     }
+ 
+     public boolean a(EnumGamemode enumgamemode, boolean flag, int i) {
+diff --git a/net/minecraft/server/v1_15_R1/GuiStatsComponent.java b/net/minecraft/server/v1_15_R1/GuiStatsComponent.java
+deleted file mode 100644
+index 1c5d25e8..00000000
+--- a/net/minecraft/server/v1_15_R1/GuiStatsComponent.java
++++ /dev/null
+@@ -1,87 +0,0 @@
+-package net.minecraft.server.v1_15_R1;
+-
+-import java.awt.Color;
+-import java.awt.Dimension;
+-import java.awt.Graphics;
+-import java.awt.event.ActionEvent;
+-import java.text.DecimalFormat;
+-import java.text.DecimalFormatSymbols;
+-import java.util.Locale;
+-import javax.swing.JComponent;
+-import javax.swing.Timer;
+-
+-public class GuiStatsComponent extends JComponent {
+-
+-    private static final DecimalFormat a = (DecimalFormat) SystemUtils.a(new DecimalFormat("########0.000"), (decimalformat) -> {
+-        decimalformat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.ROOT));
+-    });
+-    private final int[] b = new int[256];
+-    private int c;
+-    private final String[] d = new String[11];
+-    private final MinecraftServer e;
+-    private final Timer f;
+-
+-    public GuiStatsComponent(MinecraftServer minecraftserver) {
+-        this.e = minecraftserver;
+-        this.setPreferredSize(new Dimension(456, 246));
+-        this.setMinimumSize(new Dimension(456, 246));
+-        this.setMaximumSize(new Dimension(456, 246));
+-        this.f = new Timer(500, (actionevent) -> {
+-            this.b();
+-        });
+-        this.f.start();
+-        this.setBackground(Color.BLACK);
+-    }
+-
+-    private void b() {
+-        long i = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+-
+-        this.d[0] = "Memory use: " + i / 1024L / 1024L + " mb (" + Runtime.getRuntime().freeMemory() * 100L / Runtime.getRuntime().maxMemory() + "% free)";
+-        this.d[1] = "Avg tick: " + GuiStatsComponent.a.format(this.a(this.e.f) * 1.0E-6D) + " ms";
+-        this.b[this.c++ & 255] = (int) (i * 100L / Runtime.getRuntime().maxMemory());
+-        this.repaint();
+-    }
+-
+-    private double a(long[] along) {
+-        long i = 0L;
+-        long[] along1 = along;
+-        int j = along.length;
+-
+-        for (int k = 0; k < j; ++k) {
+-            long l = along1[k];
+-
+-            i += l;
+-        }
+-
+-        return (double) i / (double) along.length;
+-    }
+-
+-    public void paint(Graphics graphics) {
+-        graphics.setColor(new Color(16777215));
+-        graphics.fillRect(0, 0, 456, 246);
+-
+-        int i;
+-
+-        for (i = 0; i < 256; ++i) {
+-            int j = this.b[i + this.c & 255];
+-
+-            graphics.setColor(new Color(j + 28 << 16));
+-            graphics.fillRect(i, 100 - j, 1, j);
+-        }
+-
+-        graphics.setColor(Color.BLACK);
+-
+-        for (i = 0; i < this.d.length; ++i) {
+-            String s = this.d[i];
+-
+-            if (s != null) {
+-                graphics.drawString(s, 32, 116 + i * 16);
+-            }
+-        }
+-
+-    }
+-
+-    public void a() {
+-        this.f.stop();
+-    }
+-}
+diff --git a/net/minecraft/server/v1_15_R1/PlayerListBox.java b/net/minecraft/server/v1_15_R1/PlayerListBox.java
+deleted file mode 100644
+index c1e4d2d5..00000000
+--- a/net/minecraft/server/v1_15_R1/PlayerListBox.java
++++ /dev/null
+@@ -1,28 +0,0 @@
+-package net.minecraft.server.v1_15_R1;
+-
+-import java.util.Vector;
+-import javax.swing.JList;
+-
+-public class PlayerListBox extends JList<String> {
+-
+-    private final MinecraftServer a;
+-    private int b;
+-
+-    public PlayerListBox(MinecraftServer minecraftserver) {
+-        this.a = minecraftserver;
+-        minecraftserver.b(this::tick);
+-    }
+-
+-    public void tick() {
+-        if (this.b++ % 20 == 0) {
+-            Vector<String> vector = new Vector();
+-
+-            for (int i = 0; i < this.a.getPlayerList().getPlayers().size(); ++i) {
+-                vector.add(((EntityPlayer) this.a.getPlayerList().getPlayers().get(i)).getProfile().getName());
+-            }
+-
+-            this.setListData(vector);
+-        }
+-
+-    }
+-}
+diff --git a/net/minecraft/server/v1_15_R1/ServerGUI.java b/net/minecraft/server/v1_15_R1/ServerGUI.java
+deleted file mode 100644
+index 77ec26ef..00000000
+--- a/net/minecraft/server/v1_15_R1/ServerGUI.java
++++ /dev/null
+@@ -1,190 +0,0 @@
+-package net.minecraft.server.v1_15_R1;
+-
+-import com.google.common.collect.Lists;
+-import com.mojang.util.QueueLogAppender;
+-import java.awt.BorderLayout;
+-import java.awt.Component;
+-import java.awt.Dimension;
+-import java.awt.Font;
+-import java.awt.event.ActionEvent;
+-import java.awt.event.FocusAdapter;
+-import java.awt.event.FocusEvent;
+-import java.awt.event.WindowAdapter;
+-import java.awt.event.WindowEvent;
+-import java.util.Collection;
+-import java.util.concurrent.atomic.AtomicBoolean;
+-import java.util.regex.Pattern;
+-import javax.swing.JComponent;
+-import javax.swing.JFrame;
+-import javax.swing.JList;
+-import javax.swing.JPanel;
+-import javax.swing.JScrollBar;
+-import javax.swing.JScrollPane;
+-import javax.swing.JTextArea;
+-import javax.swing.JTextField;
+-import javax.swing.SwingUtilities;
+-import javax.swing.UIManager;
+-import javax.swing.border.EtchedBorder;
+-import javax.swing.border.TitledBorder;
+-import javax.swing.text.AttributeSet;
+-import javax.swing.text.BadLocationException;
+-import javax.swing.text.Document;
+-import org.apache.logging.log4j.LogManager;
+-import org.apache.logging.log4j.Logger;
+-
+-public class ServerGUI extends JComponent {
+-
+-    private static final Font a = new Font("Monospaced", 0, 12);
+-    private static final Logger LOGGER = LogManager.getLogger();
+-    private final DedicatedServer c;
+-    private Thread d;
+-    private final Collection<Runnable> e = Lists.newArrayList();
+-    private final AtomicBoolean f = new AtomicBoolean();
+-    private static final Pattern ANSI = Pattern.compile("\\x1B\\[([0-9]{1,2}(;[0-9]{1,2})*)?[m|K]");
+-
+-    public static ServerGUI a(final DedicatedServer dedicatedserver) {
+-        try {
+-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+-        } catch (Exception exception) {
+-            ;
+-        }
+-
+-        final JFrame jframe = new JFrame("Minecraft server");
+-        final ServerGUI servergui = new ServerGUI(dedicatedserver);
+-
+-        jframe.setDefaultCloseOperation(2);
+-        jframe.add(servergui);
+-        jframe.pack();
+-        jframe.setLocationRelativeTo((Component) null);
+-        jframe.setVisible(true);
+-        jframe.addWindowListener(new WindowAdapter() {
+-            public void windowClosing(WindowEvent windowevent) {
+-                if (!servergui.f.getAndSet(true)) {
+-                    jframe.setTitle("Minecraft server - shutting down!");
+-                    dedicatedserver.safeShutdown(true);
+-                    servergui.f();
+-                }
+-
+-            }
+-        });
+-        servergui.a(jframe::dispose);
+-        servergui.a();
+-        return servergui;
+-    }
+-
+-    private ServerGUI(DedicatedServer dedicatedserver) {
+-        this.c = dedicatedserver;
+-        this.setPreferredSize(new Dimension(854, 480));
+-        this.setLayout(new BorderLayout());
+-
+-        try {
+-            this.add(this.e(), "Center");
+-            this.add(this.c(), "West");
+-        } catch (Exception exception) {
+-            ServerGUI.LOGGER.error("Couldn't build server GUI", exception);
+-        }
+-
+-    }
+-
+-    public void a(Runnable runnable) {
+-        this.e.add(runnable);
+-    }
+-
+-    private JComponent c() {
+-        JPanel jpanel = new JPanel(new BorderLayout());
+-        com.destroystokyo.paper.gui.GuiStatsComponent com_destroystokyo_paper_gui_guistatscomponent = new com.destroystokyo.paper.gui.GuiStatsComponent(this.c);
+-
+-        this.e.add(com_destroystokyo_paper_gui_guistatscomponent::a);
+-        jpanel.add(com_destroystokyo_paper_gui_guistatscomponent, "North");
+-        jpanel.add(this.d(), "Center");
+-        jpanel.setBorder(new TitledBorder(new EtchedBorder(), "Stats"));
+-        return jpanel;
+-    }
+-
+-    private JComponent d() {
+-        JList<?> jlist = new PlayerListBox(this.c);
+-        JScrollPane jscrollpane = new JScrollPane(jlist, 22, 30);
+-
+-        jscrollpane.setBorder(new TitledBorder(new EtchedBorder(), "Players"));
+-        return jscrollpane;
+-    }
+-
+-    private JComponent e() {
+-        JPanel jpanel = new JPanel(new BorderLayout());
+-        JTextArea jtextarea = new JTextArea();
+-        JScrollPane jscrollpane = new JScrollPane(jtextarea, 22, 30);
+-
+-        jtextarea.setEditable(false);
+-        jtextarea.setFont(ServerGUI.a);
+-        JTextField jtextfield = new JTextField();
+-
+-        jtextfield.addActionListener((actionevent) -> {
+-            String s = jtextfield.getText().trim();
+-
+-            if (!s.isEmpty()) {
+-                this.c.issueCommand(s, this.c.getServerCommandListener());
+-            }
+-
+-            jtextfield.setText("");
+-        });
+-        jtextarea.addFocusListener(new FocusAdapter() {
+-            public void focusGained(FocusEvent focusevent) {}
+-        });
+-        jpanel.add(jscrollpane, "Center");
+-        jpanel.add(jtextfield, "South");
+-        jpanel.setBorder(new TitledBorder(new EtchedBorder(), "Log and chat"));
+-        this.d = new Thread(() -> {
+-            String s;
+-
+-            while ((s = QueueLogAppender.getNextLogEvent("ServerGuiConsole")) != null) {
+-                this.a(jtextarea, jscrollpane, s);
+-            }
+-
+-        });
+-        this.d.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(ServerGUI.LOGGER));
+-        this.d.setDaemon(true);
+-        return jpanel;
+-    }
+-
+-    public void a() {
+-        this.d.start();
+-    }
+-
+-    public void b() {
+-        if (!this.f.getAndSet(true)) {
+-            this.f();
+-        }
+-
+-    }
+-
+-    private void f() {
+-        this.e.forEach(Runnable::run);
+-    }
+-
+-    public void a(JTextArea jtextarea, JScrollPane jscrollpane, String s) {
+-        if (!SwingUtilities.isEventDispatchThread()) {
+-            SwingUtilities.invokeLater(() -> {
+-                this.a(jtextarea, jscrollpane, s);
+-            });
+-        } else {
+-            Document document = jtextarea.getDocument();
+-            JScrollBar jscrollbar = jscrollpane.getVerticalScrollBar();
+-            boolean flag = false;
+-
+-            if (jscrollpane.getViewport().getView() == jtextarea) {
+-                flag = (double) jscrollbar.getValue() + jscrollbar.getSize().getHeight() + (double) (ServerGUI.a.getSize() * 4) > (double) jscrollbar.getMaximum();
+-            }
+-
+-            try {
+-                document.insertString(document.getLength(), ServerGUI.ANSI.matcher(s).replaceAll(""), (AttributeSet) null);
+-            } catch (BadLocationException badlocationexception) {
+-                ;
+-            }
+-
+-            if (flag) {
+-                jscrollbar.setValue(Integer.MAX_VALUE);
+-            }
+-        }
+-
+-    }
+-}
+-- 
+2.25.1
+

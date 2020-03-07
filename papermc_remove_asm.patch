@@ -1,0 +1,635 @@
+From 4f1f2e867e7fefb01bb082f9d4bd321f6980c75c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
+ <tsao-chi@the-lingo.org>
+Date: Wed, 26 Feb 2020 18:17:08 +0800
+Subject: [PATCH] patch
+
+---
+ .../craftbukkit/v1_15_R1/util/Commodore.java  | 519 ------------------
+ .../v1_15_R1/util/CraftMagicNumbers.java      |   8 +-
+ org/bukkit/plugin/EventExecutor.java          |  60 --
+ 3 files changed, 1 insertion(+), 586 deletions(-)
+ delete mode 100644 org/bukkit/craftbukkit/v1_15_R1/util/Commodore.java
+
+diff --git a/org/bukkit/craftbukkit/v1_15_R1/util/Commodore.java b/org/bukkit/craftbukkit/v1_15_R1/util/Commodore.java
+deleted file mode 100644
+index 4bc58965..00000000
+--- a/org/bukkit/craftbukkit/v1_15_R1/util/Commodore.java
++++ /dev/null
+@@ -1,519 +0,0 @@
+-package org.bukkit.craftbukkit.v1_15_R1.util;
+-
+-import com.google.common.io.ByteStreams;
+-import java.io.File;
+-import java.io.FileOutputStream;
+-import java.io.InputStream;
+-import java.util.Arrays;
+-import java.util.Enumeration;
+-import java.util.HashMap;
+-import java.util.HashSet;
+-import java.util.Iterator;
+-import java.util.Map;
+-import java.util.Set;
+-import java.util.Map.Entry;
+-import java.util.jar.JarEntry;
+-import java.util.jar.JarFile;
+-import java.util.jar.JarOutputStream;
+-import java.util.zip.ZipEntry;
+-import javax.annotation.Nonnull;
+-import joptsimple.OptionParser;
+-import joptsimple.OptionSet;
+-import joptsimple.OptionSpec;
+-import org.bukkit.Material;
+-import org.bukkit.craftbukkit.libs.org.objectweb.asm.ClassReader;
+-import org.bukkit.craftbukkit.libs.org.objectweb.asm.ClassVisitor;
+-import org.bukkit.craftbukkit.libs.org.objectweb.asm.ClassWriter;
+-import org.bukkit.craftbukkit.libs.org.objectweb.asm.FieldVisitor;
+-import org.bukkit.craftbukkit.libs.org.objectweb.asm.Handle;
+-import org.bukkit.craftbukkit.libs.org.objectweb.asm.Label;
+-import org.bukkit.craftbukkit.libs.org.objectweb.asm.MethodVisitor;
+-import org.bukkit.craftbukkit.libs.org.objectweb.asm.Type;
+-import org.bukkit.plugin.AuthorNagException;
+-
+-public class Commodore {
+-
+-    private static final Set<String> EVIL = new HashSet(Arrays.asList("org/bukkit/World (III)I getBlockTypeIdAt", "org/bukkit/World (Lorg/bukkit/Location;)I getBlockTypeIdAt", "org/bukkit/block/Block ()I getTypeId", "org/bukkit/block/Block (I)Z setTypeId", "org/bukkit/block/Block (IZ)Z setTypeId", "org/bukkit/block/Block (IBZ)Z setTypeIdAndData", "org/bukkit/block/Block (B)V setData", "org/bukkit/block/Block (BZ)V setData", "org/bukkit/inventory/ItemStack ()I getTypeId", "org/bukkit/inventory/ItemStack (I)V setTypeId"));
+-    private static final Map<String, String> SEARCH_AND_REMOVE = initReplacementsMap();
+-
+-    public Commodore() {}
+-
+-    private static Map<String, String> initReplacementsMap() {
+-        Map<String, String> map = new HashMap();
+-
+-        map.put("org/bukkit/".concat("craftbukkit/libs/it/unimi/dsi/fastutil/"), "org/bukkit/".concat("craftbukkit/libs/"));
+-        if (Boolean.getBoolean("debug.rewriteForIde")) {
+-            String s = "v1_13_R2/";
+-
+-            map.put("net/minecraft/".concat("server/v1_13_R2/"), "v1_13_R2/");
+-            map.put("org/bukkit/".concat("craftbukkit/v1_13_R2/"), "v1_13_R2/");
+-        }
+-
+-        return map;
+-    }
+-
+-    @Nonnull
+-    private static String getOriginalOrRewrite(@Nonnull String s) {
+-        String s1 = null;
+-        Iterator iterator = Commodore.SEARCH_AND_REMOVE.entrySet().iterator();
+-
+-        while (iterator.hasNext()) {
+-            Entry<String, String> entry = (Entry) iterator.next();
+-
+-            if (s.contains((CharSequence) entry.getKey())) {
+-                s1 = s.replace((CharSequence) entry.getValue(), "");
+-            }
+-        }
+-
+-        return s1 != null ? s1 : s;
+-    }
+-
+-    public static void main(String[] astring) {
+-        OptionParser optionparser = new OptionParser();
+-        OptionSpec<File> optionspec = optionparser.acceptsAll(Arrays.asList("i", "input")).withRequiredArg().ofType(File.class).required();
+-        OptionSpec<File> optionspec1 = optionparser.acceptsAll(Arrays.asList("o", "output")).withRequiredArg().ofType(File.class).required();
+-        OptionSet optionset = optionparser.parse(astring);
+-        File file = (File) optionset.valueOf(optionspec);
+-        File file1 = (File) optionset.valueOf(optionspec1);
+-
+-        if (file.isDirectory()) {
+-            if (!file1.isDirectory()) {
+-                System.err.println("If input directory specified, output directory required too");
+-                return;
+-            }
+-
+-            File[] afile = file.listFiles();
+-            int i = afile.length;
+-
+-            for (int j = 0; j < i; ++j) {
+-                File file2 = afile[j];
+-
+-                if (file2.getName().endsWith(".jar")) {
+-                    convert(file2, new File(file1, file2.getName()));
+-                }
+-            }
+-        } else {
+-            convert(file, file1);
+-        }
+-
+-    }
+-
+-    private static void convert(File file, File file1) {
+-        System.out.println("Attempting to convert " + file + " to " + file1);
+-
+-        try {
+-            JarFile jarfile = new JarFile(file, false);
+-            Throwable throwable = null;
+-
+-            try {
+-                JarEntry jarentry = jarfile.getJarEntry(".commodore");
+-
+-                if (jarentry == null) {
+-                    JarOutputStream jaroutputstream = new JarOutputStream(new FileOutputStream(file1));
+-                    Throwable throwable1 = null;
+-
+-                    try {
+-                        Enumeration enumeration = jarfile.entries();
+-
+-                        while (enumeration.hasMoreElements()) {
+-                            jarentry = (JarEntry) enumeration.nextElement();
+-                            InputStream inputstream = jarfile.getInputStream(jarentry);
+-                            Throwable throwable2 = null;
+-
+-                            try {
+-                                byte[] abyte = ByteStreams.toByteArray(inputstream);
+-
+-                                if (jarentry.getName().endsWith(".class")) {
+-                                    abyte = convert(abyte, false);
+-                                    jarentry = new JarEntry(jarentry.getName());
+-                                }
+-
+-                                jaroutputstream.putNextEntry(jarentry);
+-                                jaroutputstream.write(abyte);
+-                            } catch (Throwable throwable3) {
+-                                throwable2 = throwable3;
+-                                throw throwable3;
+-                            } finally {
+-                                if (inputstream != null) {
+-                                    if (throwable2 != null) {
+-                                        try {
+-                                            inputstream.close();
+-                                        } catch (Throwable throwable4) {
+-                                            throwable2.addSuppressed(throwable4);
+-                                        }
+-                                    } else {
+-                                        inputstream.close();
+-                                    }
+-                                }
+-
+-                            }
+-                        }
+-
+-                        jaroutputstream.putNextEntry(new ZipEntry(".commodore"));
+-                        return;
+-                    } catch (Throwable throwable5) {
+-                        throwable1 = throwable5;
+-                        throw throwable5;
+-                    } finally {
+-                        if (jaroutputstream != null) {
+-                            if (throwable1 != null) {
+-                                try {
+-                                    jaroutputstream.close();
+-                                } catch (Throwable throwable6) {
+-                                    throwable1.addSuppressed(throwable6);
+-                                }
+-                            } else {
+-                                jaroutputstream.close();
+-                            }
+-                        }
+-
+-                    }
+-                }
+-            } catch (Throwable throwable7) {
+-                throwable = throwable7;
+-                throw throwable7;
+-            } finally {
+-                if (jarfile != null) {
+-                    if (throwable != null) {
+-                        try {
+-                            jarfile.close();
+-                        } catch (Throwable throwable8) {
+-                            throwable.addSuppressed(throwable8);
+-                        }
+-                    } else {
+-                        jarfile.close();
+-                    }
+-                }
+-
+-            }
+-
+-        } catch (Exception exception) {
+-            System.err.println("Fatal error trying to convert " + file);
+-            exception.printStackTrace();
+-        }
+-    }
+-
+-    public static byte[] convert(byte[] abyte, final boolean flag) {
+-        ClassReader classreader = new ClassReader(abyte);
+-        ClassWriter classwriter = new ClassWriter(classreader, 0);
+-
+-        classreader.accept(new ClassVisitor(458752, classwriter) {
+-            public FieldVisitor visitField(int i, String s, String s1, String s2, Object object) {
+-                s1 = Commodore.getOriginalOrRewrite(s1);
+-                if (s2 != null) {
+-                    s2 = Commodore.getOriginalOrRewrite(s2);
+-                }
+-
+-                return super.visitField(i, s, s1, s2, object);
+-            }
+-
+-            public MethodVisitor visitMethod(int i, String s, String s1, String s2, String[] astring) {
+-                return new MethodVisitor(this.api, super.visitMethod(i, s, s1, s2, astring)) {
+-                    public void visitInvokeDynamicInsn(String s3, String s4, Handle handle, Object... aobject) {
+-                        s3 = Commodore.getOriginalOrRewrite(s3);
+-                        if (s4 != null) {
+-                            s4 = Commodore.getOriginalOrRewrite(s4);
+-                        }
+-
+-                        super.visitInvokeDynamicInsn(s3, s4, handle, aobject);
+-                    }
+-
+-                    public void visitTypeInsn(int j, String s3) {
+-                        s3 = Commodore.getOriginalOrRewrite(s3);
+-                        super.visitTypeInsn(j, s3);
+-                    }
+-
+-                    public void visitFrame(int j, int k, Object[] aobject, int l, Object[] aobject1) {
+-                        int i1;
+-
+-                        for (i1 = 0; i1 < aobject.length; ++i1) {
+-                            if (aobject[i1] instanceof String) {
+-                                aobject[i1] = Commodore.getOriginalOrRewrite((String) aobject[i1]);
+-                            }
+-                        }
+-
+-                        for (i1 = 0; i1 < aobject1.length; ++i1) {
+-                            if (aobject1[i1] instanceof String) {
+-                                aobject1[i1] = Commodore.getOriginalOrRewrite((String) aobject1[i1]);
+-                            }
+-                        }
+-
+-                        super.visitFrame(j, k, aobject, l, aobject1);
+-                    }
+-
+-                    public void visitLocalVariable(String s3, String s4, String s5, Label label, Label label1, int j) {
+-                        s4 = Commodore.getOriginalOrRewrite(s4);
+-                        super.visitLocalVariable(s3, s4, s5, label, label1, j);
+-                    }
+-
+-                    public void visitFieldInsn(int j, String s3, String s4, String s5) {
+-                        s3 = Commodore.getOriginalOrRewrite(s3);
+-                        if (s5 != null) {
+-                            s5 = Commodore.getOriginalOrRewrite(s5);
+-                        }
+-
+-                        byte b0;
+-
+-                        if (flag) {
+-                            if (s3.equals("org/bukkit/Material")) {
+-                                b0 = -1;
+-                                switch (s4.hashCode()) {
+-                                    case -1311700911:
+-                                        if (s4.equals("CACTUS_GREEN")) {
+-                                            b0 = 0;
+-                                        }
+-                                        break;
+-                                    case -19295470:
+-                                        if (s4.equals("WALL_SIGN")) {
+-                                            b0 = 4;
+-                                        }
+-                                        break;
+-                                    case 2545085:
+-                                        if (s4.equals("SIGN")) {
+-                                            b0 = 3;
+-                                        }
+-                                        break;
+-                                    case 717727105:
+-                                        if (s4.equals("ROSE_RED")) {
+-                                            b0 = 2;
+-                                        }
+-                                        break;
+-                                    case 2089237253:
+-                                        if (s4.equals("DANDELION_YELLOW")) {
+-                                            b0 = 1;
+-                                        }
+-                                }
+-
+-                                switch (b0) {
+-                                    case 0:
+-                                        s4 = "GREEN_DYE";
+-                                        break;
+-                                    case 1:
+-                                        s4 = "YELLOW_DYE";
+-                                        break;
+-                                    case 2:
+-                                        s4 = "RED_DYE";
+-                                        break;
+-                                    case 3:
+-                                        s4 = "OAK_SIGN";
+-                                        break;
+-                                    case 4:
+-                                        s4 = "OAK_WALL_SIGN";
+-                                }
+-                            }
+-
+-                            super.visitFieldInsn(j, s3, s4, s5);
+-                        } else if (s3.equals("org/bukkit/Material")) {
+-                            try {
+-                                Material.valueOf("LEGACY_" + s4);
+-                            } catch (IllegalArgumentException illegalargumentexception) {
+-                                throw new AuthorNagException("No legacy enum constant for " + s4 + ". Did you forget to define a modern (1.13+) api-version in your plugin.yml?");
+-                            }
+-
+-                            super.visitFieldInsn(j, s3, "LEGACY_" + s4, s5);
+-                        } else {
+-                            if (s3.equals("org/bukkit/Art")) {
+-                                b0 = -1;
+-                                switch (s4.hashCode()) {
+-                                    case 324335498:
+-                                        if (s4.equals("BURNINGSKULL")) {
+-                                            b0 = 0;
+-                                        }
+-                                        break;
+-                                    case 1165438553:
+-                                        if (s4.equals("DONKEYKONG")) {
+-                                            b0 = 1;
+-                                        }
+-                                }
+-
+-                                switch (b0) {
+-                                    case 0:
+-                                        super.visitFieldInsn(j, s3, "BURNING_SKULL", s5);
+-                                        return;
+-                                    case 1:
+-                                        super.visitFieldInsn(j, s3, "DONKEY_KONG", s5);
+-                                        return;
+-                                }
+-                            }
+-
+-                            if (s3.equals("org/bukkit/DyeColor")) {
+-                                b0 = -1;
+-                                switch (s4.hashCode()) {
+-                                    case -1848981747:
+-                                        if (s4.equals("SILVER")) {
+-                                            b0 = 0;
+-                                        }
+-                                    default:
+-                                        switch (b0) {
+-                                            case 0:
+-                                                super.visitFieldInsn(j, s3, "LIGHT_GRAY", s5);
+-                                                return;
+-                                        }
+-                                }
+-                            }
+-
+-                            if (s3.equals("org/bukkit/Particle")) {
+-                                b0 = -1;
+-                                switch (s4.hashCode()) {
+-                                    case -1365115510:
+-                                        if (s4.equals("FALLING_DUST")) {
+-                                            b0 = 2;
+-                                        }
+-                                        break;
+-                                    case -13184184:
+-                                        if (s4.equals("BLOCK_CRACK")) {
+-                                            b0 = 0;
+-                                        }
+-                                        break;
+-                                    case 1800723268:
+-                                        if (s4.equals("BLOCK_DUST")) {
+-                                            b0 = 1;
+-                                        }
+-                                }
+-
+-                                switch (b0) {
+-                                    case 0:
+-                                    case 1:
+-                                    case 2:
+-                                        super.visitFieldInsn(j, s3, "LEGACY_" + s4, s5);
+-                                        return;
+-                                }
+-                            }
+-
+-                            super.visitFieldInsn(j, s3, s4, s5);
+-                        }
+-                    }
+-
+-                    public void visitMethodInsn(int j, String s3, String s4, String s5, boolean flag1) {
+-                        if (s3.equals("org/bukkit/map/MapView") && s4.equals("getId") && s5.equals("()S")) {
+-                            super.visitMethodInsn(j, s3, s4, "()I", flag1);
+-                        } else if ((s3.equals("org/bukkit/Bukkit") || s3.equals("org/bukkit/Server")) && s4.equals("getMap") && s5.equals("(S)Lorg/bukkit/map/MapView;")) {
+-                            super.visitMethodInsn(j, s3, s4, "(I)Lorg/bukkit/map/MapView;", flag1);
+-                        } else {
+-                            s3 = Commodore.getOriginalOrRewrite(s3);
+-                            if (s5 != null) {
+-                                s5 = Commodore.getOriginalOrRewrite(s5);
+-                            }
+-
+-                            if (flag) {
+-                                if (s3.equals("org/bukkit/Material")) {
+-                                    byte b0 = -1;
+-
+-                                    switch (s4.hashCode()) {
+-                                        case -1206994319:
+-                                            if (s4.equals("ordinal")) {
+-                                                b0 = 1;
+-                                            }
+-                                            break;
+-                                        case -823812830:
+-                                            if (s4.equals("values")) {
+-                                                b0 = 0;
+-                                            }
+-                                    }
+-
+-                                    switch (b0) {
+-                                        case 0:
+-                                            super.visitMethodInsn(j, "org/bukkit/craftbukkit/v1_15_R1/util/CraftLegacy", "modern_" + s4, s5, flag1);
+-                                            return;
+-                                        case 1:
+-                                            super.visitMethodInsn(184, "org/bukkit/craftbukkit/v1_15_R1/util/CraftLegacy", "modern_" + s4, "(Lorg/bukkit/Material;)I", false);
+-                                            return;
+-                                    }
+-                                }
+-
+-                                super.visitMethodInsn(j, s3, s4, s5, flag1);
+-                            } else if (s3.equals("org/bukkit/ChunkSnapshot") && s4.equals("getBlockData") && s5.equals("(III)I")) {
+-                                super.visitMethodInsn(j, s3, "getData", s5, flag1);
+-                            } else {
+-                                Type type = Type.getReturnType(s5);
+-
+-                                if (!Commodore.EVIL.contains(s3 + " " + s5 + " " + s4) && (!s3.startsWith("org/bukkit/block/") || !(s5 + " " + s4).equals("()I getTypeId")) && (!s3.startsWith("org/bukkit/block/") || !(s5 + " " + s4).equals("(I)Z setTypeId")) && (!s3.startsWith("org/bukkit/block/") || !(s5 + " " + s4).equals("()Lorg/bukkit/Material; getType"))) {
+-                                    if (s3.equals("org/bukkit/DyeColor") && s4.equals("valueOf") && s5.equals("(Ljava/lang/String;)Lorg/bukkit/DyeColor;")) {
+-                                        super.visitMethodInsn(j, s3, "legacyValueOf", s5, flag1);
+-                                    } else {
+-                                        if (s3.equals("org/bukkit/Material")) {
+-                                            if (s4.equals("getMaterial") && s5.equals("(I)Lorg/bukkit/Material;")) {
+-                                                super.visitMethodInsn(j, "org/bukkit/craftbukkit/v1_15_R1/legacy/CraftEvil", s4, s5, flag1);
+-                                                return;
+-                                            }
+-
+-                                            byte b1 = -1;
+-
+-                                            switch (s4.hashCode()) {
+-                                                case -1918000483:
+-                                                    if (s4.equals("getMaterial")) {
+-                                                        b1 = 2;
+-                                                    }
+-                                                    break;
+-                                                case -1776922004:
+-                                                    if (s4.equals("toString")) {
+-                                                        b1 = 6;
+-                                                    }
+-                                                    break;
+-                                                case -1206994319:
+-                                                    if (s4.equals("ordinal")) {
+-                                                        b1 = 4;
+-                                                    }
+-                                                    break;
+-                                                case -1180955124:
+-                                                    if (s4.equals("matchMaterial")) {
+-                                                        b1 = 3;
+-                                                    }
+-                                                    break;
+-                                                case -823812830:
+-                                                    if (s4.equals("values")) {
+-                                                        b1 = 0;
+-                                                    }
+-                                                    break;
+-                                                case 3373707:
+-                                                    if (s4.equals("name")) {
+-                                                        b1 = 5;
+-                                                    }
+-                                                    break;
+-                                                case 231605032:
+-                                                    if (s4.equals("valueOf")) {
+-                                                        b1 = 1;
+-                                                    }
+-                                            }
+-
+-                                            switch (b1) {
+-                                                case 0:
+-                                                case 1:
+-                                                case 2:
+-                                                case 3:
+-                                                    super.visitMethodInsn(j, "org/bukkit/craftbukkit/v1_15_R1/legacy/CraftLegacy", s4, s5, flag1);
+-                                                    return;
+-                                                case 4:
+-                                                    super.visitMethodInsn(184, "org/bukkit/craftbukkit/v1_15_R1/legacy/CraftLegacy", "ordinal", "(Lorg/bukkit/Material;)I", false);
+-                                                    return;
+-                                                case 5:
+-                                                case 6:
+-                                                    super.visitMethodInsn(184, "org/bukkit/craftbukkit/v1_15_R1/legacy/CraftLegacy", s4, "(Lorg/bukkit/Material;)Ljava/lang/String;", false);
+-                                                    return;
+-                                            }
+-                                        }
+-
+-                                        if (type.getSort() == 10 && type.getInternalName().equals("org/bukkit/Material") && s3.startsWith("org/bukkit")) {
+-                                            super.visitMethodInsn(j, s3, s4, s5, flag1);
+-                                            super.visitMethodInsn(184, "org/bukkit/craftbukkit/v1_15_R1/legacy/CraftLegacy", "toLegacy", "(Lorg/bukkit/Material;)Lorg/bukkit/Material;", false);
+-                                        } else {
+-                                            super.visitMethodInsn(j, s3, s4, s5, flag1);
+-                                        }
+-                                    }
+-                                } else {
+-                                    Type[] atype = Type.getArgumentTypes(s5);
+-                                    Type[] atype1 = new Type[atype.length + 1];
+-
+-                                    atype1[0] = Type.getObjectType(s3);
+-                                    System.arraycopy(atype, 0, atype1, 1, atype.length);
+-                                    super.visitMethodInsn(184, "org/bukkit/craftbukkit/v1_15_R1/legacy/CraftEvil", s4, Type.getMethodDescriptor(type, atype1), false);
+-                                }
+-                            }
+-                        }
+-                    }
+-                };
+-            }
+-        }, 0);
+-        return classwriter.toByteArray();
+-    }
+-}
+diff --git a/org/bukkit/craftbukkit/v1_15_R1/util/CraftMagicNumbers.java b/org/bukkit/craftbukkit/v1_15_R1/util/CraftMagicNumbers.java
+index 83358258..dd7fd8a2 100644
+--- a/org/bukkit/craftbukkit/v1_15_R1/util/CraftMagicNumbers.java
++++ b/org/bukkit/craftbukkit/v1_15_R1/util/CraftMagicNumbers.java
+@@ -235,13 +235,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
+     }
+ 
+     public byte[] processClass(PluginDescriptionFile plugindescriptionfile, String s, byte[] abyte) {
+-        try {
+-            abyte = Commodore.convert(abyte, !isLegacy(plugindescriptionfile));
+-        } catch (Exception exception) {
+-            Bukkit.getLogger().log(Level.SEVERE, "Fatal error trying to convert " + plugindescriptionfile.getFullName() + ":" + s, exception);
+-        }
+-
+-        return abyte;
++        throw new AssertionError("CraftMagicNumbers.processClass() is Removed");
+     }
+ 
+     public String getTimingsServerName() {
+diff --git a/org/bukkit/plugin/EventExecutor.java b/org/bukkit/plugin/EventExecutor.java
+index d18e50ec..8a82d844 100644
+--- a/org/bukkit/plugin/EventExecutor.java
++++ b/org/bukkit/plugin/EventExecutor.java
+@@ -1,70 +1,10 @@
+ package org.bukkit.plugin;
+ 
+-import com.destroystokyo.paper.event.executor.MethodHandleEventExecutor;
+-import com.destroystokyo.paper.event.executor.StaticMethodHandleEventExecutor;
+-import com.destroystokyo.paper.event.executor.asm.ASMEventExecutorGenerator;
+-import com.destroystokyo.paper.event.executor.asm.ClassDefiner;
+-import com.google.common.base.Preconditions;
+-import java.lang.reflect.Method;
+-import java.lang.reflect.Modifier;
+-import java.util.concurrent.ConcurrentHashMap;
+-import java.util.concurrent.ConcurrentMap;
+-import java.util.function.Function;
+ import org.bukkit.event.Event;
+ import org.bukkit.event.EventException;
+ import org.bukkit.event.Listener;
+ import org.jetbrains.annotations.NotNull;
+ 
+ public interface EventExecutor {
+-
+-    ConcurrentMap<Method, Class<? extends EventExecutor>> eventExecutorMap = new ConcurrentHashMap<Method, Class<? extends EventExecutor>>() {
+-        @NotNull
+-        public Class<? extends EventExecutor> computeIfAbsent(@NotNull Method method, @NotNull Function<? super Method, ? extends Class<? extends EventExecutor>> function) {
+-            Class<? extends EventExecutor> oclass = (Class) this.get(method);
+-
+-            if (oclass != null) {
+-                return oclass;
+-            } else {
+-                synchronized (method) {
+-                    oclass = (Class) this.get(method);
+-                    return oclass != null ? oclass : (Class) super.computeIfAbsent(method, function);
+-                }
+-            }
+-        }
+-    };
+-
+     void execute(@NotNull Listener listener, @NotNull Event event) throws EventException;
+-
+-    @NotNull
+-    static EventExecutor create(@NotNull Method method, @NotNull Class<? extends Event> oclass) {
+-        Preconditions.checkNotNull(method, "Null method");
+-        Preconditions.checkArgument(method.getParameterCount() != 0, "Incorrect number of arguments %s", method.getParameterCount());
+-        Preconditions.checkArgument(method.getParameterTypes()[0] == oclass, "First parameter %s doesn't match event class %s", method.getParameterTypes()[0], oclass);
+-        ClassDefiner classdefiner = ClassDefiner.getInstance();
+-
+-        if (Modifier.isStatic(method.getModifiers())) {
+-            return new StaticMethodHandleEventExecutor(oclass, method);
+-        } else if (!classdefiner.isBypassAccessChecks() && (!Modifier.isPublic(method.getDeclaringClass().getModifiers()) || !Modifier.isPublic(method.getModifiers()))) {
+-            return new MethodHandleEventExecutor(oclass, method);
+-        } else {
+-            Class oclass1 = (Class) EventExecutor.eventExecutorMap.computeIfAbsent(method, (method1) -> {
+-                String s = ASMEventExecutorGenerator.generateName();
+-                byte[] abyte = ASMEventExecutorGenerator.generateEventExecutor(method, s);
+-
+-                return classdefiner.defineClass(method.getDeclaringClass().getClassLoader(), s, abyte).asSubclass(EventExecutor.class);
+-            });
+-
+-            try {
+-                EventExecutor eventexecutor = (EventExecutor) oclass1.newInstance();
+-
+-                return (listener, event) -> {
+-                    if (oclass.isInstance(event)) {
+-                        eventexecutor.execute(listener, event);
+-                    }
+-                };
+-            } catch (IllegalAccessException | InstantiationException instantiationexception) {
+-                throw new AssertionError("Unable to initialize generated event executor", instantiationexception);
+-            }
+-        }
+-    }
+ }
+-- 
+2.25.1
+

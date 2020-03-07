@@ -1,0 +1,37 @@
+From f2cdd63717a258fcc22536ea911e3ab81a877bc3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
+ <tsao-chi@the-lingo.org>
+Date: Fri, 6 Mar 2020 15:01:19 +0800
+Subject: [PATCH] patch
+
+---
+ org/apache/logging/log4j/core/jmx/Server.java | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/org/apache/logging/log4j/core/jmx/Server.java b/org/apache/logging/log4j/core/jmx/Server.java
+index 24773556..92bd11c3 100644
+--- a/org/apache/logging/log4j/core/jmx/Server.java
++++ b/org/apache/logging/log4j/core/jmx/Server.java
+@@ -138,6 +138,9 @@ public final class Server {
+                     registerLoggerConfigs(loggercontext, mbeanserver, Server.executor);
+                     registerAppenders(loggercontext, mbeanserver, Server.executor);
+                 }
++            } catch (NullPointerException e) {
++                // https://github.com/oracle/graal/issues/1209
++                // not display sth like `2020-03-06 06:12:56,682 main ERROR Could not register mbeans java.lang.NullPointerException`
+             } catch (Exception exception) {
+                 Server.LOGGER.error("Could not register mbeans", exception);
+             }
+@@ -285,6 +288,9 @@ public final class Server {
+ 
+                 mbeanserver.unregisterMBean(objectname1);
+             }
++        } catch (NullPointerException e) {
++            // https://github.com/oracle/graal/issues/1209
++            // not display sth like `2020-03-06 06:12:56,679 main ERROR Could not unregister MBeans for org.apache.logging.log4j2:type=AsyncContext@2fc14f68 java.lang.NullPointerException`
+         } catch (InstanceNotFoundException instancenotfoundexception) {
+             Server.LOGGER.debug("Could not unregister MBeans for " + s + ". Ignoring " + instancenotfoundexception);
+         } catch (Exception exception) {
+-- 
+2.25.1
+

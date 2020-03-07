@@ -1,0 +1,914 @@
+From 4e75ccc3d44b40806271774983d97986cdf5d31c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
+ <tsao-chi@the-lingo.org>
+Date: Wed, 4 Mar 2020 20:35:18 +0800
+Subject: [PATCH] patch
+
+---
+ co/aikar/timings/TimingsManager.java          |  13 -
+ .../craftbukkit/v1_15_R1/CraftServer.java     |  21 +-
+ org/bukkit/plugin/SimplePluginManager.java    |  15 +-
+ org/bukkit/plugin/java/JavaPlugin.java        | 118 +++++----
+ org/bukkit/plugin/java/PluginClassLoader.java | 229 ------------------
+ .../java/StaticPluginInformationList.java     |  25 ++
+ ...ginLoader.java => StaticPluginLoader.java} | 223 +++--------------
+ 7 files changed, 150 insertions(+), 494 deletions(-)
+ delete mode 100644 org/bukkit/plugin/java/PluginClassLoader.java
+ create mode 100644 org/bukkit/plugin/java/StaticPluginInformationList.java
+ rename org/bukkit/plugin/java/{JavaPluginLoader.java => StaticPluginLoader.java} (50%)
+
+diff --git a/co/aikar/timings/TimingsManager.java b/co/aikar/timings/TimingsManager.java
+index 7dfb144b..606f0f1f 100644
+--- a/co/aikar/timings/TimingsManager.java
++++ b/co/aikar/timings/TimingsManager.java
+@@ -13,7 +13,6 @@ import org.bukkit.Bukkit;
+ import org.bukkit.Server;
+ import org.bukkit.command.Command;
+ import org.bukkit.plugin.Plugin;
+-import org.bukkit.plugin.java.PluginClassLoader;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ 
+@@ -133,18 +132,6 @@ public final class TimingsManager {
+ 
+     @Nullable
+     public static Plugin getPluginByClassloader(@Nullable Class<?> oclass) {
+-        if (oclass == null) {
+             return null;
+-        } else {
+-            ClassLoader classloader = oclass.getClassLoader();
+-
+-            if (classloader instanceof PluginClassLoader) {
+-                PluginClassLoader pluginclassloader = (PluginClassLoader) classloader;
+-
+-                return pluginclassloader.getPlugin();
+-            } else {
+-                return null;
+-            }
+-        }
+     }
+ }
+diff --git a/org/bukkit/craftbukkit/v1_15_R1/CraftServer.java b/org/bukkit/craftbukkit/v1_15_R1/CraftServer.java
+index cda0144f..c4f231ea 100644
+--- a/org/bukkit/craftbukkit/v1_15_R1/CraftServer.java
++++ b/org/bukkit/craftbukkit/v1_15_R1/CraftServer.java
+@@ -214,7 +214,6 @@ import org.bukkit.plugin.PluginManager;
+ import org.bukkit.plugin.ServicesManager;
+ import org.bukkit.plugin.SimplePluginManager;
+ import org.bukkit.plugin.SimpleServicesManager;
+-import org.bukkit.plugin.java.JavaPluginLoader;
+ import org.bukkit.plugin.messaging.Messenger;
+ import org.bukkit.plugin.messaging.StandardMessenger;
+ import org.bukkit.potion.Potion;
+@@ -436,10 +435,11 @@ public final class CraftServer implements Server {
+     }
+ 
+     public void loadPlugins() {
+-        this.pluginManager.registerInterface(JavaPluginLoader.class);
+         File file = (File) this.console.options.valueOf("plugins");
+ 
+-        if (file.exists()) {
++        if (!file.exists()) {
++            file.mkdir();
++        }
+             Plugin[] aplugin = this.pluginManager.loadPlugins(file);
+             Plugin[] aplugin1 = aplugin;
+             int i = aplugin.length;
+@@ -456,9 +456,6 @@ public final class CraftServer implements Server {
+                     Logger.getLogger(CraftServer.class.getName()).log(Level.SEVERE, throwable.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", throwable);
+                 }
+             }
+-        } else {
+-            file.mkdir();
+-        }
+ 
+     }
+ 
+@@ -1308,7 +1305,7 @@ public final class CraftServer implements Server {
+         Object object;
+ 
+         if (configurationsection != null) {
+-            for (Iterator iterator = configurationsection.getKeys(false).iterator(); iterator.hasNext(); map.put(s, ((List) object).toArray(new String[((List) object).size()]))) {
++            for (Iterator iterator = configurationsection.getKeys(false).iterator(); iterator.hasNext(); map.put(s, ((List<String>) object).toArray(new String[((List) object).size()]))) { // fix recompiling issue
+                 s = (String) iterator.next();
+                 if (configurationsection.isList(s)) {
+                     object = configurationsection.getStringList(s);
+@@ -1513,7 +1510,7 @@ public final class CraftServer implements Server {
+             object = (OfflinePlayer) this.offlinePlayers.get(uuid);
+             if (object == null) {
+                 object = new CraftOfflinePlayer(this, new GameProfile(uuid, (String) null));
+-                this.offlinePlayers.put(uuid, object);
++                this.offlinePlayers.put(uuid, (OfflinePlayer) object); // fix recompiling issue
+             }
+         } else {
+             this.offlinePlayers.remove(uuid);
+@@ -1958,7 +1955,7 @@ public final class CraftServer implements Server {
+             net_minecraft_server_v1_15_r1_entity = worldserver.getEntity(uuid);
+         } while (net_minecraft_server_v1_15_r1_entity == null);
+ 
+-        return net_minecraft_server_v1_15_r1_entity.getBukkitEntity();
++        return ((net.minecraft.server.v1_15_R1.Entity) net_minecraft_server_v1_15_r1_entity).getBukkitEntity(); // fix recompiling issue
+     }
+ 
+     public Advancement getAdvancement(NamespacedKey namespacedkey) {
+@@ -2020,10 +2017,10 @@ public final class CraftServer implements Server {
+         switch (b0) {
+             case 0:
+                 Preconditions.checkArgument(oclass == Material.class, "Block namespace must have material type");
+-                return new CraftBlockTag(this.console.getTagRegistry().getBlockTags(), minecraftkey);
++                return (Tag<T>) new CraftBlockTag(this.console.getTagRegistry().getBlockTags(), minecraftkey); // fix recompiling issue
+             case 1:
+                 Preconditions.checkArgument(oclass == Material.class, "Item namespace must have material type");
+-                return new CraftItemTag(this.console.getTagRegistry().getItemTags(), minecraftkey);
++                return (Tag<T>) new CraftItemTag(this.console.getTagRegistry().getItemTags(), minecraftkey); // fix recompiling issue
+             default:
+                 throw new IllegalArgumentException();
+         }
+@@ -2076,7 +2073,7 @@ public final class CraftServer implements Server {
+         Preconditions.checkArgument(commandsender != null, "Sender cannot be null");
+         ArgumentEntity argumententity = ArgumentEntity.multipleEntities();
+ 
+-        List list;
++        List<? extends net.minecraft.server.v1_15_R1.Entity> list; // fix recompiling issue
+ 
+         try {
+             StringReader stringreader = new StringReader(s);
+diff --git a/org/bukkit/plugin/SimplePluginManager.java b/org/bukkit/plugin/SimplePluginManager.java
+index 58d520ea..032b3b91 100644
+--- a/org/bukkit/plugin/SimplePluginManager.java
++++ b/org/bukkit/plugin/SimplePluginManager.java
+@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
+ public final class SimplePluginManager implements PluginManager {
+ 
+     private final Server server;
++    private final org.bukkit.plugin.java.StaticPluginLoader staticPluginLoaderInstance;
+     private final Map<Pattern, PluginLoader> fileAssociations = new HashMap();
+     private final List<Plugin> plugins = new ArrayList();
+     private final Map<String, Plugin> lookupNames = new HashMap();
+@@ -64,6 +65,7 @@ public final class SimplePluginManager implements PluginManager {
+ 
+     public SimplePluginManager(@NotNull Server server, @NotNull SimpleCommandMap simplecommandmap) {
+         this.server = server;
++        this.staticPluginLoaderInstance = new org.bukkit.plugin.java.StaticPluginLoader(server);
+         this.commandMap = simplecommandmap;
+         this.defaultPerms.put(true, new LinkedHashSet());
+         this.defaultPerms.put(false, new LinkedHashSet());
+@@ -316,7 +318,10 @@ public final class SimplePluginManager implements PluginManager {
+                 }
+             }
+         }
+-
++        for (var plugin : org.bukkit.plugin.java.StaticPluginInformationList.loadStaticPlugins(this.staticPluginLoaderInstance, file, this.server)) {
++            list.add(plugin);
++            loadPluginHelper(plugin);
++        }
+         return (Plugin[]) list.toArray(new Plugin[list.size()]);
+     }
+ 
+@@ -341,12 +346,15 @@ public final class SimplePluginManager implements PluginManager {
+         }
+ 
+         if (plugin != null) {
+-            this.plugins.add(plugin);
+-            this.lookupNames.put(plugin.getDescription().getName().toLowerCase(Locale.ENGLISH), plugin);
++            loadPluginHelper(plugin);
+         }
+ 
+         return plugin;
+     }
++    private synchronized void loadPluginHelper(@NotNull Plugin plugin) {
++        Validate.notNull(plugin, "Plugin cannot be null");
++        this.plugins.add(plugin);
++        this.lookupNames.put(plugin.getDescription().getName().toLowerCase(Locale.ENGLISH), plugin);}
+ 
+     private void checkUpdate(@NotNull File file) {
+         if (this.updateDirectory != null && this.updateDirectory.isDirectory()) {
+@@ -479,6 +487,7 @@ public final class SimplePluginManager implements PluginManager {
+             this.permissions.clear();
+             ((Set) this.defaultPerms.get(true)).clear();
+             ((Set) this.defaultPerms.get(false)).clear();
++            org.bukkit.plugin.java.JavaPlugin.clearStaticInformationsForReload();
+         }
+     }
+ 
+diff --git a/org/bukkit/plugin/java/JavaPlugin.java b/org/bukkit/plugin/java/JavaPlugin.java
+index 42c382bd..4f500886 100644
+--- a/org/bukkit/plugin/java/JavaPlugin.java
++++ b/org/bukkit/plugin/java/JavaPlugin.java
+@@ -41,26 +41,61 @@ public abstract class JavaPlugin extends PluginBase {
+     private FileConfiguration newConfig = null;
+     private File configFile = null;
+     Logger logger = null;
+-
+-    public JavaPlugin() {
+-        ClassLoader classloader = this.getClass().getClassLoader();
+-
+-        if (!(classloader instanceof PluginClassLoader)) {
+-            throw new IllegalStateException("JavaPlugin requires " + PluginClassLoader.class.getName());
+-        } else {
+-            ((PluginClassLoader) classloader).initialize(this);
++    private String duplicateResourcesPath = "";
++    final private static java.util.HashMap<String, JavaPlugin> staticPluginsClassNameToInstance = new java.util.HashMap<String, JavaPlugin>();
++    // Subclasses do not necessarily have not nullary constructors
++    // Simulate a Box<Pair<Pair<A,B>,Pair<C,D>>>
++    final private static
++      java.util.AbstractMap.SimpleEntry<Void, java.util.AbstractMap.SimpleEntry<
++        java.util.AbstractMap.SimpleEntry<StaticPluginLoader, File>,
++        java.util.AbstractMap.SimpleEntry<PluginDescriptionFile, String>>> fakeParametersOfNullaryConstructor
++      = new java.util.AbstractMap.SimpleEntry(null, null);
++
++    final public static void clearStaticInformationsForReload() {
++        synchronized (staticPluginsClassNameToInstance) {
++            staticPluginsClassNameToInstance.clear();
+         }
+     }
+-
+-    protected JavaPlugin(@NotNull JavaPluginLoader javapluginloader, @NotNull PluginDescriptionFile plugindescriptionfile, @NotNull File file, @NotNull File file1) {
+-        ClassLoader classloader = this.getClass().getClassLoader();
+-
+-        if (classloader instanceof PluginClassLoader) {
+-            throw new IllegalStateException("Cannot use initialization constructor at runtime");
+-        } else {
+-            this.init(javapluginloader, javapluginloader.server, plugindescriptionfile, file, file1, classloader);
++    final static void initializeFakeParameters(
++      @NotNull StaticPluginLoader staticPluginLoaderInstance,
++      @NotNull File staticPluginsConfigurationFilesDirectory,
++      @NotNull String duplicateResourcesPath) throws Exception {
++        Validate.notNull(staticPluginLoaderInstance, "StaticPluginLoader cannot be null");
++        Validate.notNull(staticPluginsConfigurationFilesDirectory, "Directory cannot be null");
++        Validate.isTrue(staticPluginsConfigurationFilesDirectory.isDirectory(), "Directory must be a directory");
++
++        Validate.notNull(duplicateResourcesPath, "duplicateResourcesPath cannot be null");
++        PluginDescriptionFile pluginDescriptionFile = new PluginDescriptionFile(JavaPlugin.class.getResourceAsStream("/"+duplicateResourcesPath+"/plugin.yml"));
++        staticPluginLoaderInstance.server.getUnsafe().checkSupported(pluginDescriptionFile);
++        synchronized (fakeParametersOfNullaryConstructor) {
++            fakeParametersOfNullaryConstructor.setValue(new java.util.AbstractMap.SimpleEntry(
++              new java.util.AbstractMap.SimpleEntry(staticPluginLoaderInstance, staticPluginsConfigurationFilesDirectory),
++              new java.util.AbstractMap.SimpleEntry(pluginDescriptionFile, duplicateResourcesPath)));
+         }
+     }
++    final static void cleanupFakeParameters() {
++        synchronized (fakeParametersOfNullaryConstructor) {
++            fakeParametersOfNullaryConstructor.setValue(null);
++        }
++    }
++    public JavaPlugin() {
++        StaticPluginLoader staticPluginLoaderInstance;
++        File staticPluginsConfigurationFilesDirectory;
++        PluginDescriptionFile pluginDescriptionFile;
++        synchronized (fakeParametersOfNullaryConstructor) {
++            java.util.AbstractMap.SimpleEntry<StaticPluginLoader, File> loaderInfo = fakeParametersOfNullaryConstructor.getValue().getKey();
++            java.util.AbstractMap.SimpleEntry<PluginDescriptionFile, String> pluginInfo = fakeParametersOfNullaryConstructor.getValue().getValue();
++            staticPluginLoaderInstance = loaderInfo.getKey();
++            staticPluginsConfigurationFilesDirectory = loaderInfo.getValue();
++            pluginDescriptionFile = pluginInfo.getKey();
++            this.duplicateResourcesPath = pluginInfo.getValue();
++            fakeParametersOfNullaryConstructor.setValue(null);
++        }
++        staticPluginLoaderInstance.initializeStaticPlugin(
++          staticPluginsConfigurationFilesDirectory,
++          this,
++          pluginDescriptionFile);
++    }
+ 
+     @NotNull
+     public final File getDataFolder() {
+@@ -176,9 +211,11 @@ public abstract class JavaPlugin extends PluginBase {
+ 
+     @Nullable
+     public InputStream getResource(@NotNull String s) {
++        URL url = this.getClassLoader().getResource(this.duplicateResourcesPath + "/" + s);
++        if (url == null) {
++            url = this.getClassLoader().getResource(s);
++        }
+         try {
+-            URL url = this.getClassLoader().getResource(s);
+-
+             if (url == null) {
+                 return null;
+             } else {
+@@ -210,6 +247,12 @@ public abstract class JavaPlugin extends PluginBase {
+     }
+ 
+     final void init(@NotNull PluginLoader pluginloader, @NotNull Server server, @NotNull PluginDescriptionFile plugindescriptionfile, @NotNull File file, @NotNull File file1, @NotNull ClassLoader classloader) {
++        Class thisClass = this.getClass();
++        String name = thisClass.getName();
++        synchronized (staticPluginsClassNameToInstance) {
++            Validate.isTrue(!staticPluginsClassNameToInstance.containsKey(name), new StringBuilder().append("JavaPlugin.init() called twice with").append(thisClass).toString());
++            staticPluginsClassNameToInstance.put(name, this);
++        }
+         this.loader = pluginloader;
+         this.server = server;
+         this.file = file1;
+@@ -217,10 +260,7 @@ public abstract class JavaPlugin extends PluginBase {
+         this.dataFolder = file;
+         this.classLoader = classloader;
+         this.configFile = new File(file, "config.yml");
+-        if (this.logger == null) {
+-            this.logger = PaperPluginLogger.getLogger(this.description);
+-        }
+-
++        this.logger = PaperPluginLogger.getLogger(this.description);
+     }
+ 
+     public boolean onCommand(@NotNull CommandSender commandsender, @NotNull Command command, @NotNull String s, @NotNull String[] astring) {
+@@ -276,36 +316,24 @@ public abstract class JavaPlugin extends PluginBase {
+     @NotNull
+     public static <T extends JavaPlugin> T getPlugin(@NotNull Class<T> oclass) {
+         Validate.notNull(oclass, "Null class cannot have a plugin");
+-        if (!JavaPlugin.class.isAssignableFrom(oclass)) {
+-            throw new IllegalArgumentException(oclass + " does not extend " + JavaPlugin.class);
+-        } else {
+-            ClassLoader classloader = oclass.getClassLoader();
+-
+-            if (!(classloader instanceof PluginClassLoader)) {
+-                throw new IllegalArgumentException(oclass + " is not initialized by " + PluginClassLoader.class);
+-            } else {
+-                JavaPlugin javaplugin = ((PluginClassLoader) classloader).plugin;
+-
+-                if (javaplugin == null) {
+-                    throw new IllegalStateException("Cannot get plugin for " + oclass + " from a static initializer");
+-                } else {
+-                    return (JavaPlugin) oclass.cast(javaplugin);
+-                }
++        String name = oclass.getName();
++        synchronized (staticPluginsClassNameToInstance) {
++            if (!staticPluginsClassNameToInstance.containsKey(name)) {
++                throw new IllegalArgumentException(oclass + " is not initialized or does not extend " + JavaPlugin.class);
+             }
++            return (T)staticPluginsClassNameToInstance.get(name);
+         }
+     }
+ 
+     @NotNull
+     public static JavaPlugin getProvidingPlugin(@NotNull Class<?> oclass) {
+         Validate.notNull(oclass, "Null class cannot have a plugin");
+-        ClassLoader classloader = oclass.getClassLoader();
+-
+-        if (!(classloader instanceof PluginClassLoader)) {
+-            throw new IllegalArgumentException(oclass + " is not provided by " + PluginClassLoader.class);
+-        } else {
+-            JavaPlugin javaplugin = ((PluginClassLoader) classloader).plugin;
+-
+-            return javaplugin;
++        String name = oclass.getName();
++        synchronized (staticPluginsClassNameToInstance) {
++            if (!staticPluginsClassNameToInstance.containsKey(name)) {
++                throw new IllegalArgumentException(oclass + " is not initialized or does not extend " + JavaPlugin.class);
++            }
++            return staticPluginsClassNameToInstance.get(name);
+         }
+     }
+ }
+diff --git a/org/bukkit/plugin/java/PluginClassLoader.java b/org/bukkit/plugin/java/PluginClassLoader.java
+deleted file mode 100644
+index f0d8012d..00000000
+--- a/org/bukkit/plugin/java/PluginClassLoader.java
++++ /dev/null
+@@ -1,229 +0,0 @@
+-package org.bukkit.plugin.java;
+-
+-import com.destroystokyo.paper.utils.PaperPluginLogger;
+-import com.google.common.io.ByteStreams;
+-import java.io.File;
+-import java.io.IOException;
+-import java.io.InputStream;
+-import java.net.MalformedURLException;
+-import java.net.URL;
+-import java.net.URLClassLoader;
+-import java.security.CodeSigner;
+-import java.security.CodeSource;
+-import java.util.Collections;
+-import java.util.Enumeration;
+-import java.util.Map;
+-import java.util.Set;
+-import java.util.concurrent.ConcurrentHashMap;
+-import java.util.jar.JarEntry;
+-import java.util.jar.JarFile;
+-import java.util.jar.Manifest;
+-import java.util.logging.Level;
+-import java.util.logging.Logger;
+-import org.apache.commons.lang.Validate;
+-import org.bukkit.plugin.InvalidPluginException;
+-import org.bukkit.plugin.PluginDescriptionFile;
+-import org.bukkit.plugin.SimplePluginManager;
+-import org.jetbrains.annotations.NotNull;
+-import org.jetbrains.annotations.Nullable;
+-
+-public final class PluginClassLoader extends URLClassLoader {
+-
+-    private final JavaPluginLoader loader;
+-    private final Map<String, Class<?>> classes = new ConcurrentHashMap();
+-    private final PluginDescriptionFile description;
+-    private final File dataFolder;
+-    private final File file;
+-    private final JarFile jar;
+-    private final Manifest manifest;
+-    private final URL url;
+-    final JavaPlugin plugin;
+-    private JavaPlugin pluginInit;
+-    private IllegalStateException pluginState;
+-    private final Set<String> seenIllegalAccess = Collections.newSetFromMap(new ConcurrentHashMap());
+-    private Logger logger;
+-
+-    public JavaPlugin getPlugin() {
+-        return this.plugin;
+-    }
+-
+-    PluginClassLoader(@NotNull JavaPluginLoader javapluginloader, @Nullable ClassLoader classloader, @NotNull PluginDescriptionFile plugindescriptionfile, @NotNull File file, @NotNull File file1) throws IOException, InvalidPluginException, MalformedURLException {
+-        super(new URL[]{file1.toURI().toURL()}, classloader);
+-        Validate.notNull(javapluginloader, "Loader cannot be null");
+-        this.loader = javapluginloader;
+-        this.description = plugindescriptionfile;
+-        this.dataFolder = file;
+-        this.file = file1;
+-        this.jar = new JarFile(file1);
+-        this.manifest = this.jar.getManifest();
+-        this.url = file1.toURI().toURL();
+-        this.logger = PaperPluginLogger.getLogger(plugindescriptionfile);
+-
+-        try {
+-            Class oclass;
+-
+-            try {
+-                oclass = Class.forName(plugindescriptionfile.getMain(), true, this);
+-            } catch (ClassNotFoundException classnotfoundexception) {
+-                throw new InvalidPluginException("Cannot find main class `" + plugindescriptionfile.getMain() + "'", classnotfoundexception);
+-            }
+-
+-            Class oclass1;
+-
+-            try {
+-                oclass1 = oclass.asSubclass(JavaPlugin.class);
+-            } catch (ClassCastException classcastexception) {
+-                throw new InvalidPluginException("main class `" + plugindescriptionfile.getMain() + "' does not extend JavaPlugin", classcastexception);
+-            }
+-
+-            this.plugin = (JavaPlugin) oclass1.newInstance();
+-        } catch (IllegalAccessException illegalaccessexception) {
+-            throw new InvalidPluginException("No public constructor", illegalaccessexception);
+-        } catch (InstantiationException instantiationexception) {
+-            throw new InvalidPluginException("Abnormal plugin type", instantiationexception);
+-        }
+-    }
+-
+-    public URL getResource(String s) {
+-        return this.findResource(s);
+-    }
+-
+-    public Enumeration<URL> getResources(String s) throws IOException {
+-        return this.findResources(s);
+-    }
+-
+-    protected Class<?> findClass(String s) throws ClassNotFoundException {
+-        return this.findClass(s, true);
+-    }
+-
+-    Class<?> findClass(@NotNull String s, boolean flag) throws ClassNotFoundException {
+-        if (!s.startsWith("org.bukkit.") && !s.startsWith("net.minecraft.")) {
+-            Class<?> oclass = (Class) this.classes.get(s);
+-
+-            if (oclass == null) {
+-                if (flag) {
+-                    oclass = this.loader.getClassByName(s);
+-                    if (oclass != null) {
+-                        PluginDescriptionFile plugindescriptionfile = ((PluginClassLoader) oclass.getClassLoader()).description;
+-
+-                        if (plugindescriptionfile != this.description && !this.seenIllegalAccess.contains(plugindescriptionfile.getName()) && !((SimplePluginManager) this.loader.server.getPluginManager()).isTransitiveDepend(this.description, plugindescriptionfile)) {
+-                            this.seenIllegalAccess.add(plugindescriptionfile.getName());
+-                            if (this.plugin != null) {
+-                                this.plugin.getLogger().log(Level.WARNING, "Loaded class {0} from {1} which is not a depend, softdepend or loadbefore of this plugin.", new Object[]{s, plugindescriptionfile.getFullName()});
+-                            } else {
+-                                this.loader.server.getLogger().log(Level.WARNING, "[{0}] Loaded class {1} from {2} which is not a depend, softdepend or loadbefore of this plugin.", new Object[]{this.description.getName(), s, plugindescriptionfile.getFullName()});
+-                            }
+-                        }
+-                    }
+-                }
+-
+-                if (oclass == null) {
+-                    String s1 = s.replace('.', '/').concat(".class");
+-                    JarEntry jarentry = this.jar.getJarEntry(s1);
+-
+-                    if (jarentry != null) {
+-                        byte[] abyte;
+-
+-                        try {
+-                            InputStream inputstream = this.jar.getInputStream(jarentry);
+-                            Throwable throwable = null;
+-
+-                            try {
+-                                abyte = ByteStreams.toByteArray(inputstream);
+-                            } catch (Throwable throwable1) {
+-                                throwable = throwable1;
+-                                throw throwable1;
+-                            } finally {
+-                                if (inputstream != null) {
+-                                    if (throwable != null) {
+-                                        try {
+-                                            inputstream.close();
+-                                        } catch (Throwable throwable2) {
+-                                            throwable.addSuppressed(throwable2);
+-                                        }
+-                                    } else {
+-                                        inputstream.close();
+-                                    }
+-                                }
+-
+-                            }
+-                        } catch (IOException ioexception) {
+-                            throw new ClassNotFoundException(s, ioexception);
+-                        }
+-
+-                        abyte = this.loader.server.getUnsafe().processClass(this.description, s1, abyte);
+-                        int i = s.lastIndexOf(46);
+-
+-                        if (i != -1) {
+-                            String s2 = s.substring(0, i);
+-
+-                            if (this.getPackage(s2) == null) {
+-                                try {
+-                                    if (this.manifest != null) {
+-                                        this.definePackage(s2, this.manifest, this.url);
+-                                    } else {
+-                                        this.definePackage(s2, (String) null, (String) null, (String) null, (String) null, (String) null, (String) null, (URL) null);
+-                                    }
+-                                } catch (IllegalArgumentException illegalargumentexception) {
+-                                    if (this.getPackage(s2) == null) {
+-                                        throw new IllegalStateException("Cannot find package " + s2);
+-                                    }
+-                                }
+-                            }
+-                        }
+-
+-                        CodeSigner[] acodesigner = jarentry.getCodeSigners();
+-                        CodeSource codesource = new CodeSource(this.url, acodesigner);
+-
+-                        oclass = this.defineClass(s, abyte, 0, abyte.length, codesource);
+-                    }
+-
+-                    if (oclass == null) {
+-                        oclass = super.findClass(s);
+-                    }
+-
+-                    if (oclass != null) {
+-                        this.loader.setClass(s, oclass);
+-                    }
+-
+-                    this.classes.put(s, oclass);
+-                }
+-            }
+-
+-            return oclass;
+-        } else {
+-            throw new ClassNotFoundException(s);
+-        }
+-    }
+-
+-    public void close() throws IOException {
+-        try {
+-            super.close();
+-        } finally {
+-            this.jar.close();
+-        }
+-
+-    }
+-
+-    @NotNull
+-    Set<String> getClasses() {
+-        return this.classes.keySet();
+-    }
+-
+-    synchronized void initialize(@NotNull JavaPlugin javaplugin) {
+-        Validate.notNull(javaplugin, "Initializing plugin cannot be null");
+-        Validate.isTrue(javaplugin.getClass().getClassLoader() == this, "Cannot initialize plugin outside of this class loader");
+-        if (this.plugin == null && this.pluginInit == null) {
+-            this.pluginState = new IllegalStateException("Initial initialization");
+-            this.pluginInit = javaplugin;
+-            javaplugin.logger = this.logger;
+-            javaplugin.init(this.loader, this.loader.server, this.description, this.dataFolder, this.file, this);
+-        } else {
+-            throw new IllegalArgumentException("Plugin already initialized!", this.pluginState);
+-        }
+-    }
+-
+-    static {
+-        ClassLoader.registerAsParallelCapable();
+-    }
+-}
+diff --git a/org/bukkit/plugin/java/StaticPluginInformationList.java b/org/bukkit/plugin/java/StaticPluginInformationList.java
+new file mode 100644
+index 00000000..17f161f3
+--- /dev/null
++++ b/org/bukkit/plugin/java/StaticPluginInformationList.java
+@@ -0,0 +1,25 @@
++package org.bukkit.plugin.java;
++import java.io.File;
++import java.util.logging.Level;
++import java.util.List;
++import java.util.ArrayList;
++import org.bukkit.Server;
++import org.apache.commons.lang.Validate;
++import org.jetbrains.annotations.NotNull;
++
++public final class StaticPluginInformationList {
++    private static void displayException(@NotNull Server server, @NotNull Exception e, @NotNull String name) {
++        server.getLogger().log(Level.SEVERE, "Could not load the plugin " + name, e);
++    }
++    @NotNull
++    public static List<JavaPlugin> loadStaticPlugins(@NotNull StaticPluginLoader pl, @NotNull File dir, @NotNull Server server) {
++        Validate.notNull(pl, "StaticPluginLoader cannot be null");
++        Validate.notNull(dir, "Directory cannot be null");
++        Validate.notNull(server, "Server cannot be null");
++        List<JavaPlugin> list = new ArrayList();
++        JavaPlugin.cleanupFakeParameters();
++        // LOAD_STATIC_PLUGINS_THERE // try{JavaPlugin.initializeFakeParameters(pl,dir,<duplicateResourcesPath>);list.add(new <class>());}catch(Exception e){displayException(server,e,"<name>");}
++        JavaPlugin.cleanupFakeParameters();
++        return list;
++    }
++}
+diff --git a/org/bukkit/plugin/java/JavaPluginLoader.java b/org/bukkit/plugin/java/StaticPluginLoader.java
+similarity index 50%
+rename from org/bukkit/plugin/java/JavaPluginLoader.java
+rename to org/bukkit/plugin/java/StaticPluginLoader.java
+index 0e02ecdf..763c3238 100644
+--- a/org/bukkit/plugin/java/JavaPluginLoader.java
++++ b/org/bukkit/plugin/java/StaticPluginLoader.java
+@@ -44,186 +44,40 @@ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ import org.yaml.snakeyaml.error.YAMLException;
+ 
+-public final class JavaPluginLoader implements PluginLoader {
++public final class StaticPluginLoader implements PluginLoader {
+ 
+     final Server server;
+-    private final Pattern[] fileFilters = new Pattern[]{Pattern.compile("\\.jar$")};
+-    private final Map<String, Class<?>> classes = new ConcurrentHashMap();
+-    private final List<PluginClassLoader> loaders = new CopyOnWriteArrayList();
+ 
+     /** @deprecated */
+     @Deprecated
+-    public JavaPluginLoader(@NotNull Server server) {
++    public StaticPluginLoader(@NotNull Server server) {
+         Validate.notNull(server, "Server cannot be null");
+         this.server = server;
+     }
+ 
++    @Nullable
++    public void initializeStaticPlugin(@NotNull File directory, @NotNull JavaPlugin x, @NotNull PluginDescriptionFile pluginDescriptionFile) {
++        Validate.notNull(x, "JavaPlugin cannot be null");
++        Validate.notNull(directory, "Directory cannot be null");
++        Validate.notNull(pluginDescriptionFile, "Description cannot be null");
++        Validate.isTrue(directory.isDirectory(), "Directory must be a directory");
++        String name = pluginDescriptionFile.getName();
++        x.init(this, this.server, pluginDescriptionFile, new File(directory, name), new File(directory, "COMPILED_SO_THE_PLUGIN_FILE_"+name+"_jar_DOESNT_EXIST.jar"), this.getClass().getClassLoader());
++    }
++
+     @NotNull
+     public Plugin loadPlugin(@NotNull File file) throws InvalidPluginException {
+-        Validate.notNull(file, "File cannot be null");
+-        if (!file.exists()) {
+-            throw new InvalidPluginException(new FileNotFoundException(file.getPath() + " does not exist"));
+-        } else {
+-            PluginDescriptionFile plugindescriptionfile;
+-
+-            try {
+-                plugindescriptionfile = this.getPluginDescription(file);
+-            } catch (InvalidDescriptionException invaliddescriptionexception) {
+-                throw new InvalidPluginException(invaliddescriptionexception);
+-            }
+-
+-            File file1 = file.getParentFile();
+-            File file2 = new File(file1, plugindescriptionfile.getName());
+-            File file3 = new File(file1, plugindescriptionfile.getRawName());
+-
+-            if (!file2.equals(file3)) {
+-                if (file2.isDirectory() && file3.isDirectory()) {
+-                    this.server.getLogger().warning(String.format("While loading %s (%s) found old-data folder: `%s' next to the new one `%s'", plugindescriptionfile.getFullName(), file, file3, file2));
+-                } else if (file3.isDirectory() && !file2.exists()) {
+-                    if (!file3.renameTo(file2)) {
+-                        throw new InvalidPluginException("Unable to rename old data folder: `" + file3 + "' to: `" + file2 + "'");
+-                    }
+-
+-                    this.server.getLogger().log(Level.INFO, String.format("While loading %s (%s) renamed data folder: `%s' to `%s'", plugindescriptionfile.getFullName(), file, file3, file2));
+-                }
+-            }
+-
+-            if (file2.exists() && !file2.isDirectory()) {
+-                throw new InvalidPluginException(String.format("Projected datafolder: `%s' for %s (%s) exists and is not a directory", file2, plugindescriptionfile.getFullName(), file));
+-            } else {
+-                Iterator iterator = plugindescriptionfile.getDepend().iterator();
+-
+-                String s;
+-                Plugin plugin;
+-
+-                do {
+-                    if (!iterator.hasNext()) {
+-                        this.server.getUnsafe().checkSupported(plugindescriptionfile);
+-
+-                        PluginClassLoader pluginclassloader;
+-
+-                        try {
+-                            pluginclassloader = new PluginClassLoader(this, this.getClass().getClassLoader(), plugindescriptionfile, file2, file);
+-                        } catch (InvalidPluginException invalidpluginexception) {
+-                            throw invalidpluginexception;
+-                        } catch (Throwable throwable) {
+-                            throw new InvalidPluginException(throwable);
+-                        }
+-
+-                        this.loaders.add(pluginclassloader);
+-                        return pluginclassloader.plugin;
+-                    }
+-
+-                    s = (String) iterator.next();
+-                    plugin = this.server.getPluginManager().getPlugin(s);
+-                } while (plugin != null);
+-
+-                throw new UnknownDependencyException(s);
+-            }
+-        }
++        throw new InvalidPluginException(new FileNotFoundException("_|_ does not exist"));
+     }
+ 
+     @NotNull
+     public PluginDescriptionFile getPluginDescription(@NotNull File file) throws InvalidDescriptionException {
+-        Validate.notNull(file, "File cannot be null");
+-        JarFile jarfile = null;
+-        InputStream inputstream = null;
+-
+-        PluginDescriptionFile plugindescriptionfile;
+-
+-        try {
+-            jarfile = new JarFile(file);
+-            JarEntry jarentry = jarfile.getJarEntry("plugin.yml");
+-
+-            if (jarentry == null) {
+-                throw new InvalidDescriptionException(new FileNotFoundException("Jar does not contain plugin.yml"));
+-            }
+-
+-            inputstream = jarfile.getInputStream(jarentry);
+-            plugindescriptionfile = new PluginDescriptionFile(inputstream);
+-        } catch (IOException ioexception) {
+-            throw new InvalidDescriptionException(ioexception);
+-        } catch (YAMLException yamlexception) {
+-            throw new InvalidDescriptionException(yamlexception);
+-        } finally {
+-            if (jarfile != null) {
+-                try {
+-                    jarfile.close();
+-                } catch (IOException ioexception1) {
+-                    ;
+-                }
+-            }
+-
+-            if (inputstream != null) {
+-                try {
+-                    inputstream.close();
+-                } catch (IOException ioexception2) {
+-                    ;
+-                }
+-            }
+-
+-        }
+-
+-        return plugindescriptionfile;
++        throw new InvalidDescriptionException(new FileNotFoundException("_|_ does not exist"));
+     }
+ 
+     @NotNull
+     public Pattern[] getPluginFileFilters() {
+-        return (Pattern[]) this.fileFilters.clone();
+-    }
+-
+-    @Nullable
+-    Class<?> getClassByName(String s) {
+-        Class<?> oclass = (Class) this.classes.get(s);
+-
+-        if (oclass != null) {
+-            return oclass;
+-        } else {
+-            Iterator iterator = this.loaders.iterator();
+-
+-            while (iterator.hasNext()) {
+-                PluginClassLoader pluginclassloader = (PluginClassLoader) iterator.next();
+-
+-                try {
+-                    oclass = pluginclassloader.findClass(s, false);
+-                } catch (ClassNotFoundException classnotfoundexception) {
+-                    ;
+-                }
+-
+-                if (oclass != null) {
+-                    return oclass;
+-                }
+-            }
+-
+-            return null;
+-        }
+-    }
+-
+-    void setClass(@NotNull String s, @NotNull Class<?> oclass) {
+-        if (!this.classes.containsKey(s)) {
+-            this.classes.put(s, oclass);
+-            if (ConfigurationSerializable.class.isAssignableFrom(oclass)) {
+-                Class<? extends ConfigurationSerializable> oclass1 = oclass.asSubclass(ConfigurationSerializable.class);
+-
+-                ConfigurationSerialization.registerClass(oclass1);
+-            }
+-        }
+-
+-    }
+-
+-    private void removeClass(@NotNull String s) {
+-        Class oclass = (Class) this.classes.remove(s);
+-
+-        try {
+-            if (oclass != null && ConfigurationSerializable.class.isAssignableFrom(oclass)) {
+-                Class<? extends ConfigurationSerializable> oclass1 = oclass.asSubclass(ConfigurationSerializable.class);
+-
+-                ConfigurationSerialization.unregisterClass(oclass1);
+-            }
+-        } catch (NullPointerException nullpointerexception) {
+-            ;
+-        }
+-
++        return new Pattern[]{};
+     }
+ 
+     @NotNull
+@@ -300,7 +154,22 @@ public final class JavaPluginLoader implements PluginLoader {
+                             }
+                         }
+ 
+-                        TimedEventExecutor timedeventexecutor = new TimedEventExecutor(EventExecutor.create(method1, oclass1), plugin, method1, oclass1);
++                        // undo Spigot-API-Patches/0022-Use-ASM-for-event-executors.patch
++                        EventExecutor timedeventexecutor = new TimedEventExecutor(new EventExecutor() {
++                            @Override
++                            public void execute(@NotNull Listener listener, @NotNull Event event) throws org.bukkit.event.EventException {
++                                try {
++                                    if (!oclass1.isAssignableFrom(event.getClass())) {
++                                        return;
++                                    }
++                                    method1.invoke(listener, event);
++                                } catch (java.lang.reflect.InvocationTargetException ex) {
++                                    throw new org.bukkit.event.EventException(ex.getCause());
++                                } catch (Throwable t) {
++                                    throw new org.bukkit.event.EventException(t);
++                                }
++                            }
++                        }, plugin, method1, oclass1);
+ 
+                         ((Set) set).add(new RegisteredListener(listener, timedeventexecutor, eventhandler.priority(), plugin, eventhandler.ignoreCancelled()));
+                         break;
+@@ -325,12 +194,6 @@ public final class JavaPluginLoader implements PluginLoader {
+ 
+             plugin.getLogger().info(s);
+             JavaPlugin javaplugin = (JavaPlugin) plugin;
+-            PluginClassLoader pluginclassloader = (PluginClassLoader) javaplugin.getClassLoader();
+-
+-            if (!this.loaders.contains(pluginclassloader)) {
+-                this.loaders.add(pluginclassloader);
+-                this.server.getLogger().log(Level.WARNING, "Enabled plugin with unregistered PluginClassLoader " + plugin.getDescription().getFullName());
+-            }
+ 
+             try {
+                 javaplugin.setEnabled(true);
+@@ -357,36 +220,12 @@ public final class JavaPluginLoader implements PluginLoader {
+             plugin.getLogger().info(s);
+             this.server.getPluginManager().callEvent(new PluginDisableEvent(plugin));
+             JavaPlugin javaplugin = (JavaPlugin) plugin;
+-            ClassLoader classloader = javaplugin.getClassLoader();
+ 
+             try {
+                 javaplugin.setEnabled(false);
+             } catch (Throwable throwable) {
+                 this.server.getLogger().log(Level.SEVERE, "Error occurred while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", throwable);
+             }
+-
+-            if (classloader instanceof PluginClassLoader) {
+-                PluginClassLoader pluginclassloader = (PluginClassLoader) classloader;
+-
+-                this.loaders.remove(pluginclassloader);
+-                Set<String> set = pluginclassloader.getClasses();
+-                Iterator iterator = set.iterator();
+-
+-                while (iterator.hasNext()) {
+-                    String s1 = (String) iterator.next();
+-
+-                    this.removeClass(s1);
+-                }
+-
+-                try {
+-                    if (flag) {
+-                        pluginclassloader.close();
+-                    }
+-                } catch (IOException ioexception) {
+-                    this.server.getLogger().log(Level.WARNING, "Error closing the Plugin Class Loader for " + plugin.getDescription().getFullName());
+-                    ioexception.printStackTrace();
+-                }
+-            }
+         }
+ 
+     }
+-- 
+2.25.1
+
