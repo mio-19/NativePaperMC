@@ -103,10 +103,7 @@ reflconf["net.minecraft.server.v1_15_R1.PlayerChunkMap"] = {
     { "name": "trackedEntities", "allowWrite": true }]}
 // ProtocolSupport End
 for(const x of lines_of('../lukkit_event_classes')) {
-  reflconf[x].methods = reflconf[x].methods || []
-  const found = reflconf[x].methods.map(x=>x.name==="getHandlerList"&&x.parameterTypes.length===0).reduce(((x,y)=>x||y),false)
-  if(!found) {
-    reflconf[x].methods.push({"name": "getHandlerList", "parameterTypes": [] })}}
+  maybe_refl_add(x, {})}
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
   "fields": [
