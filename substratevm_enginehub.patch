@@ -1,0 +1,160 @@
+From 85cf99201b951c17d1e54290a92135cde9aaed1c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
+ <tsao-chi@the-lingo.org>
+Date: Sat, 7 Mar 2020 20:20:43 +0800
+Subject: [PATCH] patch
+
+---
+ .../piston/converter/ArgumentConverters.java  | 97 +++++--------------
+ 1 file changed, 24 insertions(+), 73 deletions(-)
+
+diff --git a/org/enginehub/piston/converter/ArgumentConverters.java b/org/enginehub/piston/converter/ArgumentConverters.java
+index 96c35234..b1073d2a 100644
+--- a/org/enginehub/piston/converter/ArgumentConverters.java
++++ b/org/enginehub/piston/converter/ArgumentConverters.java
+@@ -4,11 +4,8 @@ import com.google.common.base.Preconditions;
+ import com.google.common.base.Throwables;
+ import com.google.common.collect.ImmutableList;
+ import com.google.common.reflect.TypeToken;
+-import java.lang.invoke.LambdaConversionException;
+-import java.lang.invoke.LambdaMetafactory;
+-import java.lang.invoke.MethodHandle;
+-import java.lang.invoke.MethodHandles;
+-import java.lang.invoke.MethodType;
++import java.lang.reflect.Method;
++import java.lang.reflect.Constructor;
+ import java.util.List;
+ import java.util.Objects;
+ import java.util.Optional;
+@@ -20,12 +17,6 @@ public class ArgumentConverters {
+     private static final ArgumentConverter<String> STRING_ARGUMENT_CONVERTER = SimpleArgumentConverter.from((s, injectedvalueaccess) -> {
+         return SuccessfulConversion.fromSingle(s);
+     }, "any text");
+-    private static final String CONVERTER_CONVERT = "convert";
+-    private static final MethodType HANDLE_TO_CONVERTER = MethodType.methodType(Converter.class, MethodHandle.class);
+-    private static final MethodType CONVERTER_SIG = MethodType.methodType(ConversionResult.class, String.class, InjectedValueAccess.class);
+-    private static final MethodHandle HANDLE_TO_CONVERTER_CONVERTER;
+-    private static final MethodHandle SUCCESSFUL_CONVERSION_FROM;
+-    private static final MethodHandle FAILED_CONVERSION_FROM;
+     private static final List<ArgumentConverters.ACProvider<Object>> PROVIDERS;
+ 
+     public static ArgumentConverter<String> forString() {
+@@ -34,71 +25,46 @@ public class ArgumentConverters {
+ 
+     private static <T> Optional<ArgumentConverter<T>> valueOfConverters(TypeToken<T> typetoken) {
+         Class oclass = typetoken.wrap().getRawType();
+-
+-        MethodHandle methodhandle;
+-
++        Method m;
+         try {
+-            methodhandle = MethodHandles.publicLookup().findStatic(oclass, "valueOf", MethodType.methodType(oclass, String.class));
+-        } catch (IllegalAccessException | NoSuchMethodException nosuchmethodexception) {
++            m = oclass.getMethod("valueOf", String.class);
++        } catch (NoSuchMethodException e) {
+             return Optional.empty();
+         }
+-
+-        methodhandle = noContextConverter(methodhandle);
+-        return Optional.of(converterForHandle(methodhandle, oclass));
++        return Optional.of(SimpleArgumentConverter.from((s, c) -> {
++            try {
++                return SuccessfulConversion.fromSingle((T) m.invoke(null, s));
++            } catch (Throwable e) {
++                return FailedConversion.from(e);
++            }
++        }, "any " + CaseHelper.titleToSpacedLower(oclass.getSimpleName())));
+     }
+ 
+     private static <T> Optional<ArgumentConverter<T>> constructorConverters(TypeToken<T> typetoken) {
+         Class oclass = typetoken.wrap().getRawType();
+-
+-        MethodHandle methodhandle;
+-
++        Constructor<T> cons;
+         try {
+-            methodhandle = MethodHandles.publicLookup().findConstructor(oclass, MethodType.methodType(Void.TYPE, String.class));
+-        } catch (IllegalAccessException | NoSuchMethodException nosuchmethodexception) {
++            cons = oclass.getConstructor(String.class);
++        } catch (NoSuchMethodException e) {
+             return Optional.empty();
+         }
+-
+-        methodhandle = noContextConverter(methodhandle);
+-        return Optional.of(converterForHandle(methodhandle, oclass));
+-    }
+-
+-    private static MethodHandle noContextConverter(MethodHandle methodhandle) {
+-        return MethodHandles.dropArguments(methodhandle, 1, new Class[]{InjectedValueAccess.class});
+-    }
+-
+-    private static <T> SimpleArgumentConverter<T> converterForHandle(MethodHandle methodhandle, Class<?> oclass) {
+-        MethodType methodtype = methodhandle.type();
+-
+-        Preconditions.checkArgument(methodtype.parameterType(0).isAssignableFrom(String.class) && methodtype.parameterType(1).isAssignableFrom(InjectedValueAccess.class) && oclass.isAssignableFrom(methodtype.returnType()), "Incorrect signature: %s", methodhandle);
+-        methodhandle = augmentHandleForConversionResult(methodhandle);
+-
+-        Converter converter;
+-
+-        try {
+-            converter = ArgumentConverters.HANDLE_TO_CONVERTER_CONVERTER.invokeExact(methodhandle);
+-        } catch (Throwable throwable) {
+-            Throwables.throwIfUnchecked(throwable);
+-            throw new RuntimeException(throwable);
+-        }
+-
+-        return SimpleArgumentConverter.from(converter, "any " + CaseHelper.titleToSpacedLower(oclass.getSimpleName()));
+-    }
+-
+-    private static MethodHandle augmentHandleForConversionResult(MethodHandle methodhandle) {
+-        MethodHandle methodhandle1 = MethodHandles.filterReturnValue(methodhandle, ArgumentConverters.SUCCESSFUL_CONVERSION_FROM.asType(MethodType.methodType(ConversionResult.class, methodhandle.type().returnType())));
+-
+-        methodhandle1 = MethodHandles.catchException(methodhandle1, Throwable.class, ArgumentConverters.FAILED_CONVERSION_FROM.asType(MethodType.methodType(ConversionResult.class, Throwable.class)));
+-        return methodhandle1;
++        return Optional.of(SimpleArgumentConverter.from((s, c) -> {
++            try {
++                return SuccessfulConversion.fromSingle(cons.newInstance(s));
++            } catch (Throwable e) {
++                return FailedConversion.from(e);
++            }
++        }, "any " + CaseHelper.titleToSpacedLower(oclass.getSimpleName())));
+     }
+ 
+     public static <T> ArgumentConverter<T> get(TypeToken<T> typetoken) {
+         if (typetoken.getRawType().equals(String.class)) {
+-            ArgumentConverter<T> argumentconverter = forString();
++            ArgumentConverter<T> argumentconverter = (ArgumentConverter<T>) forString(); // fix recompiling issue
+ 
+             return argumentconverter;
+         } else {
+             ArgumentConverter<T> argumentconverter1 = (ArgumentConverter) ArgumentConverters.PROVIDERS.stream().map((argumentconverters_acprovider) -> {
+-                return argumentconverters_acprovider.provideAc(typetoken);
++                return argumentconverters_acprovider.provideAc((TypeToken<Object>) typetoken); // fix recompiling issue
+             }).filter(Optional::isPresent).map(Optional::get).findAny().orElseThrow(() -> {
+                 return new IllegalArgumentException("No built-in converters for " + typetoken);
+             });
+@@ -110,21 +76,6 @@ public class ArgumentConverters {
+     private ArgumentConverters() {}
+ 
+     static {
+-        MethodHandle methodhandle = MethodHandles.invoker(ArgumentConverters.CONVERTER_SIG);
+-
+-        try {
+-            HANDLE_TO_CONVERTER_CONVERTER = LambdaMetafactory.metafactory(MethodHandles.lookup(), "convert", ArgumentConverters.HANDLE_TO_CONVERTER, ArgumentConverters.CONVERTER_SIG, methodhandle, ArgumentConverters.CONVERTER_SIG).dynamicInvoker();
+-        } catch (LambdaConversionException lambdaconversionexception) {
+-            throw new IllegalStateException("Failed to load ArgumentConverter MetaFactory", lambdaconversionexception);
+-        }
+-
+-        try {
+-            SUCCESSFUL_CONVERSION_FROM = MethodHandles.lookup().findStatic(SuccessfulConversion.class, "fromSingle", MethodType.methodType(SuccessfulConversion.class, Object.class));
+-            FAILED_CONVERSION_FROM = MethodHandles.lookup().findStatic(FailedConversion.class, "from", MethodType.methodType(FailedConversion.class, Throwable.class));
+-        } catch (IllegalAccessException | NoSuchMethodException nosuchmethodexception) {
+-            throw new IllegalStateException(nosuchmethodexception);
+-        }
+-
+         PROVIDERS = ImmutableList.of(ArgumentConverters::valueOfConverters, ArgumentConverters::constructorConverters, (typetoken) -> {
+             return Objects.equals(typetoken.wrap().getRawType(), Character.class) ? Optional.of(SimpleArgumentConverter.from((s, injectedvalueaccess) -> {
+                 return SuccessfulConversion.fromSingle(s.charAt(0));
+-- 
+2.25.1
+

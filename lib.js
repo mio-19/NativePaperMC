@@ -362,6 +362,12 @@ public class GetVersion {
         "protocolsupport/utils/ReflectionUtils")
       patches.push("substratevm_protocolsupport.patch")}
 
+    // com.oracle.svm.core.jdk.UnsupportedFeatureError: Unsupported method java.lang.invoke.MemberName.getInvocationType() is reachable: All methods from java.lang.invoke should have been replaced during image building.
+    if(await exists("org/enginehub/piston/converter/ArgumentConverters.class")){
+      classes_to_patch.push("org/enginehub/piston/converter/ArgumentConverters")
+      classes_has_nested_classes.push("org/enginehub/piston/converter/ArgumentConverters")
+      patches.push("substratevm_enginehub.patch")}
+
     await rm("-fr", paths_simply_remove)
 
     const java_files_to_compile = classes_to_patch.concat(classes_to_add).map(x=>`${x}.java`)
