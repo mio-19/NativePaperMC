@@ -133,6 +133,8 @@ buildtimeinits="$buildtimeinits org.sqlite.JDBC org.sqlite.core.DB\$ProgressObse
 # ProtocolSupport
 # see also lib.js
 buildtimeinits="$buildtimeinits protocolsupport.protocol.utils.minecraftdata.MinecraftKeybindData protocolsupport.utils.ResourceUtils protocolsupport.ProtocolSupport "'protocolsupport.ProtocolSupport$BuildInfo'
+# FAWE
+buildtimeinits="$buildtimeinits com.sk89q.worldedit.command.util.annotation"
 # "-H:+UseLowLatencyGC" requires GraalVM Enterprise, so not enabled
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
