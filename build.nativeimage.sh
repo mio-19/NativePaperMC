@@ -126,7 +126,7 @@ EOF
 # to fix "... was unintentionally initialized at build time. ... has been initialized without the native-image initialization instrumentation and the stack trace can't be tracked. Try marking this class for build-time initialization with --initialize-at-build-time=..."
 buildtimeinits="org.apache.http.HttpEntityEnclosingRequest org.apache.http.conn.ManagedHttpClientConnection org.apache.http.Header org.apache.http.client.methods.CloseableHttpResponse org.apache.http.StatusLine org.apache.http.HttpResponse org.apache.http.protocol.HttpContext org.apache.http.ProtocolVersion org.apache.http.HttpRequest org.apache.http.HttpEntity org.apache.http.params.HttpParams"
 # (partial) safe to initialize at build time
-buildtimeinits="$buildtimeinits org.bukkit.Bukkit net.md_5.bungee.chat com.google.common.collect com.google.common.base com.google.gson com.google.gson.internal com.google.gson.internal.bind com.google.gson.reflect"
+buildtimeinits="$buildtimeinits org.bukkit.Bukkit org.bukkit.scheduler.BukkitRunnable net.md_5.bungee.chat com.google.common.collect com.google.common.base com.google.gson com.google.gson.internal com.google.gson.internal.bind com.google.gson.reflect"
 # https://github.com/oracle/graal/issues/966
 # https://github.com/mageddo/graalvm-examples/blob/492a43bb83984e613a67230aa384198600d7152f/sqlite/build.gradle
 buildtimeinits="$buildtimeinits org.sqlite.JDBC org.sqlite.core.DB\$ProgressObserver org.sqlite.core.DB org.sqlite.core.NativeDB org.sqlite.ProgressHandler org.sqlite.Function org.sqlite.Function\$Aggregate org.sqlite.Function\$Window"
@@ -135,6 +135,8 @@ buildtimeinits="$buildtimeinits org.sqlite.JDBC org.sqlite.core.DB\$ProgressObse
 buildtimeinits="$buildtimeinits protocolsupport.protocol.utils.minecraftdata.MinecraftKeybindData protocolsupport.utils.ResourceUtils protocolsupport.ProtocolSupport "'protocolsupport.ProtocolSupport$BuildInfo'
 # FAWE
 buildtimeinits="$buildtimeinits com.sk89q.worldedit.command.util.annotation"
+# Negativity
+buildtimeinits="$buildtimeinits com.elikill58.negativity.spigot.timers.TimerAnalyzePacket com.elikill58.negativity.universal"
 # "-H:+UseLowLatencyGC" requires GraalVM Enterprise, so not enabled
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
