@@ -93,6 +93,12 @@ for(const x of [
   "net.minecraft.server.v1_15_R1.BlockCarpet",
   "net.minecraft.server.v1_15_R1.BlockLadder"]) {
   reflconf[x].fields.forEach(f => {f.allowWrite = true})}
+reflconf["net.minecraft.server.v1_15_R1.PlayerChunkMap"] = {
+  // traced
+  "allDeclaredFields": true,
+  // not traced
+  "fields": [
+    { "name": "trackedEntities", "allowWrite": true }]}
 // ProtocolSupport End
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
