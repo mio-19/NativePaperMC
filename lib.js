@@ -453,4 +453,4 @@ async function make_files_list(){
   await touch("dist/files.list") // include `files.list` itself.
   await writeFile("dist/files.list", (await get_files_list("dist")).join(" "))}
 exports.librarify_papermc = package_async_program(librarify_papermc)
-
+exports.make_files_list = package_async_program(make_files_list)
