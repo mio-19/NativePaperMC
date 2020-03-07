@@ -112,14 +112,9 @@ import java.io.File;
 import java.io.IOException;
 public class BukkitImplLoader {
     private static final Logger log = LoggerFactory.getLogger(BukkitImplLoader.class);
-    public BukkitImplLoader() {
-    }
-    private void addDefaults() {
-    }
-    public void addFromJar(File file) throws IOException {
-    }
-    public void addFromPath(ClassLoader classLoader) throws IOException {
-    }
+    public BukkitImplLoader() {}
+    public void addFromJar(File file) throws IOException {}
+    public void addFromPath(ClassLoader classLoader) throws IOException {}
     public BukkitImplAdapter loadAdapter() throws AdapterLoadException {
         try {
             return (BukkitImplAdapter) new com.sk89q.worldedit.bukkit.adapter.impl.${impl}();
@@ -159,14 +154,10 @@ import java.io.File;
 import java.io.IOException;
 public class BukkitImplLoader {
     private static final Logger log = LoggerFactory.getLogger(BukkitImplLoader.class);
-    public BukkitImplLoader() {
-    }
-    private void addDefaults() {
-    }
-    public void addFromJar(File file) throws IOException {
-    }
-    public void addFromPath(ClassLoader classLoader) throws IOException {
-    }
+    public BukkitImplLoader() {}
+    public void addClass(Class cls) {}
+    public void addFromJar(File file) throws IOException {}
+    public void addFromPath(ClassLoader classLoader) throws IOException {}
     public BukkitImplAdapter loadAdapter() throws AdapterLoadException {
         try {
             return (BukkitImplAdapter) new com.sk89q.worldedit.bukkit.adapter.impl.${impl}();
