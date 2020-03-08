@@ -122,7 +122,7 @@ public class BukkitImplLoader {
         throw new AdapterLoadException(${JSON.stringify(LOAD_ERROR_MESSAGE)});
     }
 }`)
-    await execaToStdIO("javac", ["-cp", "../dist/papermc.jar:.", "com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java"])
+    await execaToStdIO("javac", ["--release", "8", "-cp", "../dist/papermc.jar:.", "com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java"])
     await rm("com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java", "../dist/plugins/WorldEdit.jar")
     await execaToStdIO("7z", ["a", "-r", "../dist/plugins/WorldEdit.jar", "."])
   await popd()
@@ -165,7 +165,7 @@ public class BukkitImplLoader {
         throw new AdapterLoadException(${JSON.stringify(LOAD_ERROR_MESSAGE)});
     }
 }`)
-    await execaToStdIO("javac", ["-cp", "../dist/papermc.jar:.", "com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java"])
+    await execaToStdIO("javac", ["--release", "8", "-cp", "../dist/papermc.jar:.", "com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java"])
     await rm("com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java", "DummyFawe.src", "../dist/plugins/FastAsyncWorldEdit.jar")
     await execaToStdIO("7z", ["a", "-r", "../dist/plugins/FastAsyncWorldEdit.jar", "."])
   await popd()
@@ -317,7 +317,7 @@ public class ${plug_name} {
     return classloader.getResourceAsStream(path);
   }
 }`)
-          await execaToStdIO("javac", [mockclass_java])
+          await execaToStdIO("javac", ["--release", "8", mockclass_java])
           await rm(mockclass_java)
           await execaToStdIO("7z", ["a", "-r", "../../../dist/plugins/"+plug, "."])
         await popd()
@@ -513,7 +513,7 @@ public class GetVersion {
         "../../net/minecraft/server/v1_15_R1/ResourcePackVanilla.java")
       await popd()}
     console.log(`compiling ...`)
-    await execaToStdIO("javac", ["-cp", "../annotations.jar:."].concat(java_files_to_compile))
+    await execaToStdIO("javac", ["--release", "8", "-cp", "../annotations.jar:."].concat(java_files_to_compile))
     await rm(java_files_to_compile)
     console.log("repacking papermc ...")
     await execaToStdIO("7z", ["a", "-r", "../../dist/papermc.jar", "."])
