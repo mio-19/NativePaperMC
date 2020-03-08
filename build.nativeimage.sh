@@ -107,7 +107,7 @@ for(const x of lines_of('../lukkit_event_classes')) {
 // allowWrite is not traced (for WorldEdit and FAWE)
 reflconf["java.lang.Enum"] = {
     "fields": [
-      { "name": "name" },
+      { "name": "name", "allowWrite": true },
       { "name": "ordinal", "allowWrite": true }]}
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
