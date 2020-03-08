@@ -4,7 +4,7 @@ rm -fr tmp
 
 #mkdir tmp
 #cp -r dist tmp/
-mkdir tmp/dist
+mkdir -p tmp/dist
 cp dist/papermc.jar tmp/dist/
 cp dist/eula.txt tmp/dist/
 
