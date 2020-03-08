@@ -286,7 +286,7 @@ import java.io.InputStream;
 public class ${plug_name} {
   public static URL classGetResource(Class clazz, String path) {
     if (path.startsWith("/")) {
-      URL url = clazz.getClassLoader().getResource("${dupres_path}/" + path);
+      URL url = clazz.getClassLoader().getResource("${dupres_path}" + path);
       if (url != null) {
         return url;
       }
@@ -302,7 +302,7 @@ public class ${plug_name} {
   }
   public static InputStream classGetResourceAsStream(Class clazz, String path) {
     if (path.startsWith("/")) {
-      InputStream stream = clazz.getClassLoader().getResourceAsStream("${dupres_path}/" + path);
+      InputStream stream = clazz.getClassLoader().getResourceAsStream("${dupres_path}" + path);
       if (stream != null) {
         return stream;
       }
