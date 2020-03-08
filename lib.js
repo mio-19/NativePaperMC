@@ -269,19 +269,21 @@ public class ProcessOneClass {
             .map(async plug=>
               (await find(plug))
                 .filter(x=>x.endsWith(".class"))
-                .map(x=>`${plug}/plugin.yml ${x} pluginsResourcesMock/${plug}`))))
+                .map(x=>`${plug}/plugin.yml ${x} pluginsResourcesMock/${plug.split('.')[0]}`))))
             .flat()
             .join("\n"))
       await execaToStdIO("java", ["-cp", "../../dist/papermc.jar", "../ProcessOneClass.java", "../args"])
       for(const plug of plugins){
         await pushd(plug)
-          const mockclass = `pluginsResourcesMock/${plug}`
-          const dupres_path = "pluginsResources/"+plug
-          await writeFile(mockclass+".java",
+          const plug_name = plug.split('.')[0]
+          await mkdir("-p", "pluginsResourcesMock")
+          const mockclass_java = `pluginsResourcesMock/${plug_name}.java`
+          const dupres_path = "pluginsResources/"+plug_name
+          await writeFile(mockclass_java,
 `package pluginsResourcesMock;
 import java.net.URL;
 import java.io.InputStream;
-public class ${plug} {
+public class ${plug_name} {
   public static URL classGetResource(Class clazz, String path) {
     if (path.startsWith("/")) {
       URL url = clazz.getClassLoader().getResource("${dupres_path}/" + path);
@@ -315,7 +317,7 @@ public class ${plug} {
     return classloader.getResourceAsStream(path);
   }
 }`)
-          await execaToStdIO("javac", [mockclass+".java"])
+          await execaToStdIO("javac", [mockclass_java])
           await rm(mockclass+".java")
           await execaToStdIO("7z", ["a", "-r", "../../../dist/plugins/"+plug, "."])
         await popd()
