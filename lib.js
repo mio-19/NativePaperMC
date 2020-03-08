@@ -442,11 +442,6 @@ public class GetVersion {
       "papermc_substratevm.patch",
       "substratevm_log4j.patch"] // https://github.com/oracle/graal/issues/1209
 
-    // https://github.com/games647/CraftAPI/pull/3
-    if(await exists("com/github/games647/craftapi/cache/SafeCacheBuilder.class")){
-      classes_to_patch.push("com/github/games647/craftapi/cache/SafeCacheBuilder")
-      patches.push("librarify_and_substratevm_fastlogin.patch")}
-
     // com.oracle.svm.core.jdk.UnsupportedFeatureError: Resource bundle lookup must be loaded during native image generation: sun.awt.resources.awt
     // at java.awt.event.KeyEvent.getKeyText(KeyEvent.java:1403) ~[?:?]
     // patch the class to fix `java.lang.IllegalStateException: Access to implementation before detect` when build-time init
