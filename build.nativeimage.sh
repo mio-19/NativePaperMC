@@ -5,6 +5,7 @@ rm -fr tmp
 mkdir -p tmp/dist
 cp dist/papermc.jar tmp/dist/
 echo 'eula=true' > tmp/dist/eula.txt
+# for FastLogin and Auth plugins
 echo 'online-mode=false' > tmp/dist/server.properties
 
 rm dist/papermc.jar
