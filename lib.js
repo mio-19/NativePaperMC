@@ -318,7 +318,7 @@ public class ${plug_name} {
   }
 }`)
           await execaToStdIO("javac", [mockclass_java])
-          await rm(mockclass+".java")
+          await rm(mockclass_java)
           await execaToStdIO("7z", ["a", "-r", "../../../dist/plugins/"+plug, "."])
         await popd()
       }
