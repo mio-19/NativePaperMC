@@ -171,7 +171,7 @@ native-image -cp papermc.jar \
   -H:JNIConfigurationFiles=nativeimage-build-config/jni-config.json \
   -H:ReflectionConfigurationFiles=nativeimage-build-config/reflect-config.json \
   --report-unsupported-elements-at-runtime \
-  "--initialize-at-build-time=$(echo "$buildtimeinits" | sed 's| |,|g')" \
+  "--initialize-at-build-time=pluginsResourcesMock,$(echo "$buildtimeinits" | sed 's| |,|g')" \
   --allow-incomplete-classpath \
   --enable-url-protocols=http,https \
   -H:Name=papermc \
