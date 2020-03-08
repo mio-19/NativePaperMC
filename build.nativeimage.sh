@@ -119,7 +119,7 @@ reflconf["com.sk89q.worldedit.registry.state.PropertyKey"] = {
   "fields": [ { "name": "id", "allowWrite": true } ]}
 // WorldEdit and FAWE End
 // EssentialsX
-maybe_refl_add("com.earth2me.essentials.commands.Commandhelp", {})
+maybe_refl_add("com.earth2me.essentials.commands.Commandhelp", {"methods": [{ "name": "<init>","parameterTypes": [] }]})
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
   "fields": [
