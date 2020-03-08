@@ -278,7 +278,7 @@ public class ProcessOneClass {
           const plug_name = plug.split('.')[0]
           await mkdir("-p", "pluginsResourcesMock")
           const mockclass_java = `pluginsResourcesMock/${plug_name}.java`
-          const dupres_path = "pluginsResources/"+await execa("yq", ["read", "plugin.yml", "name"])
+          const dupres_path = "pluginsResources/"+(await execa("yq", ["read", "plugin.yml", "name"])).stdout
           await writeFile(mockclass_java,
 `package pluginsResourcesMock;
 import java.net.URL;
