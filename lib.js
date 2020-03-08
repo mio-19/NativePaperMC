@@ -186,23 +186,75 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import java.util.Arrays;
 import org.bukkit.craftbukkit.v1_15_R1.util.Commodore;
 import org.bukkit.craftbukkit.v1_15_R1.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.libs.org.objectweb.asm.ClassReader;
+import org.bukkit.craftbukkit.libs.org.objectweb.asm.ClassVisitor;
+import org.bukkit.craftbukkit.libs.org.objectweb.asm.ClassWriter;
+import org.bukkit.craftbukkit.libs.org.objectweb.asm.MethodVisitor;
+import org.bukkit.craftbukkit.libs.org.objectweb.asm.Opcodes;
+import org.bukkit.craftbukkit.libs.org.objectweb.asm.Type;
 public class ProcessOneClass {
   public static void main(String[] args) throws Exception {
     if(args.length != 1){ throw new IllegalArgumentException("expect <path>"); }
     for (var arg : Files.readAllLines(Paths.get(args[0]))) {
       String[] pluginYmlAndClass = arg.split(" ");
-      if(pluginYmlAndClass.length != 2){ throw new IllegalArgumentException("expect '<plugin.yml> <class>', get '"+arg+"'"); }
+      if(pluginYmlAndClass.length != 3){ throw new IllegalArgumentException("expect '<plugin.yml> <class> <mockclass>', get '"+arg+"'"); }
       var pluginDescriptionPath = pluginYmlAndClass[0];
       var clazzPath = pluginYmlAndClass[1];
+      var mockclass = pluginYmlAndClass[2];
       var pdf = new PluginDescriptionFile(Files.newInputStream(Paths.get(pluginDescriptionPath)));
-      //System.out.println("processing " + clazzPath + " (plugin.yml: " + pluginDescriptionPath + ") ...");
+      //System.out.println("processing " + clazzPath + " (plugin.yml: " + pluginDescriptionPath + ", mockclass: " + mockclass + ") ...");
       byte[] clazz = Files.readAllBytes(Paths.get(clazzPath));
-      byte[] result = Commodore.convert(clazz, !CraftMagicNumbers.isLegacy(pdf));
+      byte[] result = resourcesPathPatch(mockclass, Commodore.convert(clazz, !CraftMagicNumbers.isLegacy(pdf)));
       Files.newOutputStream(Paths.get(clazzPath)).write(result);
     }
   }
-}
-`)
+  private static byte[] resourcesPathPatch(String mockclass, byte[] classByteCode) {
+    var classReader = new ClassReader(classByteCode);
+    var classWriter = new ClassWriter(classReader, 0);
+    classReader.accept(new ClassVisitor(Opcodes.ASM7, classWriter) {
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            if(opcode == Opcodes.INVOKEVIRTUAL &&
+              owner.equals("java/lang/ClassLoader") &&
+              name.equals("getResourceAsStream") &&
+              desc.equals("(Ljava/lang/String;)Ljava/io/InputStream;")) {
+              // https://stackoverflow.com/questions/35617471/asm-java-replace-method-call-instruction
+              super.visitMethodInsn(Opcodes.INVOKESTATIC, mockclass,
+                "classLoaderGetResourceAsStream", "(Ljava/lang/ClassLoader;Ljava/lang/String;)Ljava/io/InputStream;", false);
+            }else if(opcode == Opcodes.INVOKEVIRTUAL &&
+              owner.equals("java/lang/Class") &&
+              name.equals("getResourceAsStream") &&
+              desc.equals("(Ljava/lang/String;)Ljava/io/InputStream;")) {
+              // https://stackoverflow.com/questions/35617471/asm-java-replace-method-call-instruction
+              super.visitMethodInsn(Opcodes.INVOKESTATIC, mockclass,
+                "classGetResourceAsStream", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/io/InputStream;", false);
+            }else if(opcode == Opcodes.INVOKEVIRTUAL &&
+              owner.equals("java/lang/ClassLoader") &&
+              name.equals("getResource") &&
+              desc.equals("(Ljava/lang/String;)Ljava/net/URL;")) {
+              // https://stackoverflow.com/questions/35617471/asm-java-replace-method-call-instruction
+              super.visitMethodInsn(Opcodes.INVOKESTATIC, mockclass,
+                "classLoaderGetResource", "(Ljava/lang/ClassLoader;Ljava/lang/String;)Ljava/net/URL;", false);
+            }else if(opcode == Opcodes.INVOKEVIRTUAL &&
+              owner.equals("java/lang/Class") &&
+              name.equals("getResource") &&
+              desc.equals("(Ljava/lang/String;)Ljava/net/URL;")) {
+              // https://stackoverflow.com/questions/35617471/asm-java-replace-method-call-instruction
+              super.visitMethodInsn(Opcodes.INVOKESTATIC, mockclass,
+                "classGetResource", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/net/URL;", false);
+            } else {
+              super.visitMethodInsn(opcode, owner, name, desc, itf);
+            }
+          }
+        };
+      }
+    }, 0);
+    return classWriter.toByteArray();
+  }
+}`)
     await pushd("../dist/plugins")
       const plugins = (await ls("*.jar"))
     await popd()
@@ -217,12 +269,54 @@ public class ProcessOneClass {
             .map(async plug=>
               (await find(plug))
                 .filter(x=>x.endsWith(".class"))
-                .map(x=>`${plug}/plugin.yml ${x}`))))
+                .map(x=>`${plug}/plugin.yml ${x} pluginsResourcesMock/${plug}`))))
             .flat()
             .join("\n"))
       await execaToStdIO("java", ["-cp", "../../dist/papermc.jar", "../ProcessOneClass.java", "../args"])
       for(const plug of plugins){
         await pushd(plug)
+          const mockclass = `pluginsResourcesMock/${plug}`
+          const dupres_path = "pluginsResources/"+plug
+          await writeFile(mockclass+".java",
+`package pluginsResourcesMock;
+import java.net.URL;
+import java.io.InputStream;
+public class ${plug} {
+  public static URL classGetResource(Class clazz, String path) {
+    if (path.startsWith("/")) {
+      URL url = clazz.getClassLoader().getResource("${dupres_path}/" + path);
+      if (url != null) {
+        return url;
+      }
+    }
+    return clazz.getResource(path);
+  }
+  public static URL classLoaderGetResource(ClassLoader classloader, String path) {
+    URL url = classloader.getResource("${dupres_path}/" + path);
+    if (url != null) {
+      return url;
+    }
+    return classloader.getResource(path);
+  }
+  public static InputStream classGetResourceAsStream(Class clazz, String path) {
+    if (path.startsWith("/")) {
+      InputStream stream = clazz.getClassLoader().getResourceAsStream("${dupres_path}/" + path);
+      if (stream != null) {
+        return stream;
+      }
+    }
+    return clazz.getResourceAsStream(path);
+  }
+  public static InputStream classLoaderGetResourceAsStream(ClassLoader classloader, String path) {
+    InputStream stream = classloader.getResourceAsStream("${dupres_path}/" + path);
+    if (stream != null) {
+      return stream;
+    }
+    return classloader.getResourceAsStream(path);
+  }
+}`)
+          await execaToStdIO("javac", [mockclass+".java"])
+          await rm(mockclass+".java")
           await execaToStdIO("7z", ["a", "-r", "../../../dist/plugins/"+plug, "."])
         await popd()
       }
