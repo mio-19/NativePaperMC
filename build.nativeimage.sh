@@ -157,11 +157,12 @@ buildtimeinits="$buildtimeinits protocolsupport.protocol.utils.minecraftdata.Min
 buildtimeinits="$buildtimeinits com.sk89q.worldedit.command.util.annotation"
 # Negativity
 buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.elikill58.negativity.universal.Cheat com.elikill58.negativity.spigot.inventories.CheckMenuInventory com.elikill58.negativity.universal.NegativityPlayer com.elikill58.negativity.spigot.SpigotNegativityPlayer com.elikill58.negativity.spigot.events.FightManager com.elikill58.negativity.universal.FlyingReason com.elikill58.negativity.spigot.timers.TimerAnalyzePacket "'com.elikill58.negativity.universal.Stats$StatsType'
-# "-H:+UseLowLatencyGC" requires GraalVM Enterprise, so not enabled
+# "-H:+UseLowLatencyGC" requires GraalVM Enterprise #, so not enabled
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
 native-image -cp papermc.jar \
   --no-server -J-Xms10G -J-Xmx18G \
+  -H:+UseLowLatencyGC \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
   -Dfile.encoding=UTF-8 \
