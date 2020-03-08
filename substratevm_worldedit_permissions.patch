@@ -1,0 +1,26 @@
+From 2df88ee9cb5de570cd7f1ca1b92148a2e3c585ea Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
+ <tsao-chi@the-lingo.org>
+Date: Sun, 8 Mar 2020 13:09:03 +0800
+Subject: [PATCH] patch
+
+---
+ com/sk89q/wepif/PermissionsResolverManager.java | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/com/sk89q/wepif/PermissionsResolverManager.java b/com/sk89q/wepif/PermissionsResolverManager.java
+index 5109161c..6d96438a 100644
+--- a/com/sk89q/wepif/PermissionsResolverManager.java
++++ b/com/sk89q/wepif/PermissionsResolverManager.java
+@@ -69,6 +69,8 @@ public class PermissionsResolverManager implements PermissionsResolver {
+                 if (this.permissionResolver != null) {
+                     break;
+                 }
++            } catch (NoSuchMethodException e) {
++                // `oclass.getMethod("factory", Server.class, YAMLProcessor.class);` currently not working if the plugin doesn't exist
+             } catch (Throwable throwable) {
+                 this.logger.warn("Error in factory method for " + oclass.getSimpleName(), throwable);
+             }
+-- 
+2.25.1
+

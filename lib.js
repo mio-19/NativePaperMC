@@ -368,9 +368,15 @@ public class GetVersion {
       patches.push("substratevm_enginehub.patch")}
     // FAWE only
     if(await exists("com/boydti/fawe/util/ReflectionUtils.class")){
-      classes_to_patch.push("com/boydti/fawe/util/ReflectionUtils", "com/sk89q/worldedit/bukkit/WorldEditPlugin")
+      classes_to_patch.push("com/boydti/fawe/util/ReflectionUtils", "com/sk89q/worldedit/bukkit/WorldEditPlugin", "com/boydti/fawe/Fawe")
       classes_has_nested_classes.push("com/boydti/fawe/util/ReflectionUtils", "com/sk89q/worldedit/bukkit/WorldEditPlugin")
       patches.push("substratevm_fawe.patch")}
+    // java.lang.NoSuchMethodException: com.sk89q.wepif........factory(org.bukkit.Server, com.sk89q.util.yaml.YAMLProcessor)
+    // WorldEdit and FAWE
+    if(await exists("com/sk89q/wepif/PermissionsResolverManager.class")){
+      classes_to_patch.push("com/sk89q/wepif/PermissionsResolverManager")
+      classes_has_nested_classes.push("com/sk89q/wepif/PermissionsResolverManager")
+      patches.push("substratevm_worldedit_permissions.patch")}
 
     await rm("-fr", paths_simply_remove)
 
