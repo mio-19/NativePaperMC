@@ -104,11 +104,17 @@ reflconf["net.minecraft.server.v1_15_R1.PlayerChunkMap"] = {
 // ProtocolSupport End
 for(const x of lines_of('../lukkit_event_classes')) {
   maybe_refl_add(x, {})}
-// allowWrite is not traced (for WorldEdit and FAWE)
+// WorldEdit and FAWE Begin (allowWrite is not traced)
 reflconf["java.lang.Enum"] = {
     "fields": [
       { "name": "name", "allowWrite": true },
       { "name": "ordinal", "allowWrite": true }]}
+reflconf["com.sk89q.worldedit.registry.state.PropertyKey"] = {
+  "allDeclaredFields": true,
+  "fields": [ { "name": "id", "allowWrite": true } ]}
+// WorldEdit and FAWE End
+// EssentialsX
+maybe_refl_add("com.earth2me.essentials.commands.Commandhelp", {})
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
   "fields": [
