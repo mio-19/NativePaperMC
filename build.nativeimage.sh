@@ -1,8 +1,13 @@
 #!/bin/sh
 set -e
 rm -fr tmp
-mkdir tmp
-cp -r dist tmp/
+
+#mkdir tmp
+#cp -r dist tmp/
+mkdir tmp/dist
+cp dist/papermc.jar tmp/dist/
+cp dist/eula.txt tmp/dist/
+
 rm dist/papermc.jar
 cd tmp
   # https://github.com/mageddo/graalvm-examples/blob/492a43bb83984e613a67230aa384198600d7152f/sqlite/build.gradle
