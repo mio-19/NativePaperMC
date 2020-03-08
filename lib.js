@@ -442,7 +442,7 @@ public class GetVersion {
 
     // https://github.com/games647/CraftAPI/pull/3
     if(await exists("com/github/games647/craftapi/cache/SafeCacheBuilder.class")){
-      classes_to_patch.push("com/github/games647/craftapi/cache/SafeCacheBuilder", "com/github/games647/fastlogin/core/shared/FastLoginCore")
+      classes_to_patch.push("com/github/games647/craftapi/cache/SafeCacheBuilder")
       patches.push("librarify_and_substratevm_fastlogin.patch")}
 
     // com.oracle.svm.core.jdk.UnsupportedFeatureError: Resource bundle lookup must be loaded during native image generation: sun.awt.resources.awt

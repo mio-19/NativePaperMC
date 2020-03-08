@@ -2,8 +2,10 @@
 set -e
 rm -fr tmp
 
-mkdir tmp
-cp -r dist tmp/
+mkdir -p tmp/dist
+cp dist/papermc.jar tmp/dist/
+echo 'eula=true' > tmp/dist/eula.txt
+echo 'online-mode=false' > tmp/dist/server.properties
 
 rm dist/papermc.jar
 cd tmp
@@ -36,8 +38,6 @@ plugin.registerEvent("ServerLoadEvent", function(...)
 end)
 EOF
 java -agentlib:native-image-agent=experimental-class-loader-support,config-output-dir=nativeimage-build-config -jar papermc.jar
-rm -fr plugins # remove configurations
-java -agentlib:native-image-agent=experimental-class-loader-support,config-merge-dir=nativeimage-build-config -jar papermc.jar
 # native-image-agent not tracing
 7z l -ba -slt papermc.jar | grep '^Path ' | awk '{print $3;}' |
   grep '^net/minecraft/server/v1_15_R1/Packet.*\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../packets_classes
