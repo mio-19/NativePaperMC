@@ -3,7 +3,6 @@
     "cloudscraper": "^4.6.0",
     "execa": "^4.0.0",
     "is-zip-file": "^1.0.2",
-    "jsdom": "^16.2.0",
     "node-stream-zip": "^1.9.1",
     "request": "^2.88.2",
     "shelljs": "^0.8.3",

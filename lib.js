@@ -16,7 +16,6 @@ function partition(arr, filter) {
 
 const request = require('cloudscraper')
 const { get } = request
-const { JSDOM } = require('jsdom')
 const fs = require('fs')
 const util = require('util')
 const shell = require('shelljs')
