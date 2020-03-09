@@ -1,0 +1,24 @@
+FROM centos:7
+
+RUN yum install -y centos-release-scl-rh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
+  yum install -y devtoolset-9-gcc devtoolset-9-gcc-c++ git zlib-devel p7zip p7zip-plugins python3 patch curl && \
+  ln -s /opt/rh/devtoolset-9/root/usr/bin/* /usr/local/bin
+
+RUN curl -Lo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/3.2.1/yq_linux_amd64 && chmod +x /usr/local/bin/yq
+
+ARG GRAALVM_ARCH=linux-amd64
+ARG GRAALVM_VERSION=20.0.0
+ARG JAVA_VERSION=java11
+#ARG GRAALVM_PKG=https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-$GRAALVM_VERSION/graalvm-ce-$JAVA_VERSION-$GRAALVM_ARCH-$GRAALVM_VERSION.tar.gz
+ARG GRAALVM_PKG="https://web.archive.org/web/20200228064159/https%3A%2F%2Fdownload.oracle.com%2Fotn%2Futilities_drivers%2Foracle-labs%2Fgraalvm-ee-java11-linux-amd64-20.0.0.tar.gz%3FAuthParam%3D1582872216_1c709e264459fe8f38146174374aa6b8"
+#ARG NATIVEIMAGE_PKG=https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-$GRAALVM_VERSION/native-image-installable-svm-$JAVA_VERSION-linux-$GRAALVM_ARCH-$GRAALVM_VERSION.jar
+ARG NATIVEIMAGE_PKG="https://web.archive.org/web/20200228083230/https%3A%2F%2Fdownload.oracle.com%2Fotn%2Futilities_drivers%2Foracle-labs%2Fnative-image-installable-svm-svmee-java11-linux-amd64-20.0.0.jar%3FAuthParam%3D1582878853_656f39126124eddc70c07568cddaf024"
+
+ENV JAVA_HOME=/opt/graalvm-ce-$JAVA_VERSION-$GRAALVM_VERSION
+ENV PATH=$PATH:$JAVA_HOME/bin
+
+RUN mkdir -p "${JAVA_HOME}" && curl -L "${GRAALVM_PKG}" | tar --strip-components=1 -xzvC "${JAVA_HOME}"
+
+#RUN gu install native-image
+
+RUN curl -Lo /tmp/nativeimage.jar "${NATIVEIMAGE_PKG}" && gu install /tmp/nativeimage.jar && rm /tmp/nativeimage.jar

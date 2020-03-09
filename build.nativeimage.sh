@@ -50,7 +50,7 @@ mc_files | grep '^net/minecraft/server/v1_15_R1/Packet.*\.class$' | classes_name
 mc_files | grep '^protocolsupport/.*\.class$' | classes_names > ../protocolsupport_classes
 mc_files | grep '^org/bukkit/event/.*Event\.class$' | classes_names > ../lukkit_event_classes
 mc_files | grep '^com/earth2me/essentials/commands/Command.*\.class$' | classes_names > ../essentials_commands_classes
-mc_files | grep '^net/minecrell/serverlistplus/core/config/.*Conf\.class$' | classes_names > ../serverlistplus_config_classes
+mc_files | grep '^net/minecrell/serverlistplus/core/.*Conf\.class$' | classes_names > ../serverlistplus_config_classes
 node << 'EOF'
 const fs = require('fs')
 const path = 'nativeimage-build-config/reflect-config.json'
