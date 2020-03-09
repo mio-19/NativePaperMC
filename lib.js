@@ -409,7 +409,7 @@ public class GetVersion {
     await rm("-fr", "../../dist/mc.jar", "../../dist/plugins/*.jar")}
 
     const classes_to_remove = [
-      "org/bukkit/plugin/java/JavaPluginLoader", "org/bukkit/plugin/java/PluginClassLoader", // librarify_papermc.patch
+      "org/bukkit/plugin/java/JavaPluginLoader", // librarify_papermc.patch
       "net/minecraft/server/v1_15_R1/ServerGUI", "net/minecraft/server/v1_15_R1/GuiStatsComponent", "net/minecraft/server/v1_15_R1/PlayerListBox", // mc1_15_remove_gui.patch
       "org/bukkit/craftbukkit/v1_15_R1/util/Commodore"] // papermc_remove_asm.patch
     const classes_to_patch = [
@@ -420,7 +420,9 @@ public class GetVersion {
       "org/bukkit/craftbukkit/Main", "net/minecraft/server/v1_15_R1/ResourcePackVanilla", // papermc_substratevm.patch
       "org/apache/logging/log4j/core/jmx/Server"] // substratevm_log4j.patch
     const classes_to_add = ["org/bukkit/plugin/java/StaticPluginLoader", "org/bukkit/plugin/java/StaticPluginInformationList"] // librarify_papermc.patch
-    const paths_simply_remove = ["com/destroystokyo/paper/gui/", // mc1_15_remove_gui.patch (undo Spigot-Server-Patches/0442-Make-the-GUI-graph-fancier.patch)
+    const paths_simply_remove = [
+      "org/bukkit/plugin/java/PluginClassLoader.class", // librarify_papermc.patch
+      "com/destroystokyo/paper/gui/", // mc1_15_remove_gui.patch (undo Spigot-Server-Patches/0442-Make-the-GUI-graph-fancier.patch)
       // papermc_remove_asm.patch Begin
         "org/bukkit/craftbukkit/libs/org/objectweb/asm/",
         // (undo Spigot-API-Patches/0022-Use-ASM-for-event-executors.patch)
