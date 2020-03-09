@@ -272,7 +272,7 @@ public class ProcessOneClass {
                 .map(x=>`${plug}/plugin.yml ${x} pluginsResourcesMock/${plug.split('.')[0]}`))))
             .flat()
             .join("\n"))
-      await execaToStdIO("java", ["-cp", "../../dist/papermc.jar", "../ProcessOneClass.java", "../args"])
+      await execaToStdIO("java", ["-cp", "../../dist/mc.jar", "../ProcessOneClass.java", "../args"])
       for(const plug of plugins){
         await pushd(plug)
           const plug_name = plug.split('.')[0]
@@ -370,7 +370,7 @@ async function librarify_papermc_main(){
     await Promise.all([
       execaToStdIO("curl", ["-Lo", "fernflower.jar", "https://hub.spigotmc.org/stash/projects/SPIGOT/repos/builddata/raw/bin/fernflower.jar?at=4a6af056693a191400cc4bc242823734c865c282"]), // MC1.15.2
       execaToStdIO("curl", ["-Lo", "annotations.jar", "https://repo1.maven.org/maven2/org/jetbrains/annotations/19.0.0/annotations-19.0.0.jar"])])
-    await execaToStdIO("7z", ["e", "../dist/papermc.jar", "META-INF/MANIFEST.MF"])
+    await execaToStdIO("7z", ["e", "../dist/mc.jar", "META-INF/MANIFEST.MF"])
     await writeFile("GetVersion.java", `
 public class GetVersion {
   public static void main(String[] args) throws Exception {
@@ -380,7 +380,7 @@ public class GetVersion {
     const implementation_version = (await execa("java", ["GetVersion.java"])).stdout
   await popd()
   await pushd("tmp/classes")
-    {console.log("extracting papermc and plugins ...")
+    {console.log("extracting mc.jar and plugins ...")
     const plugins_files_table = {}
     for(const p of sorted_plugins){
       for(const f of (await lsZip("../../"+plugins_table[p].jarpath)).filter(x=>x.isFile).map(x=>x.name).filter(x=>!x.startsWith('META-INF/'))){
@@ -388,11 +388,11 @@ public class GetVersion {
           plugins_files_table[f].push(p)
         }else{
           plugins_files_table[f] = [p]}}}
-    for(const f of (await lsZip("../../dist/papermc.jar")).filter(x=>x.isFile).map(x=>x.name).filter(x=>!x.startsWith('META-INF/'))){
+    for(const f of (await lsZip("../../dist/mc.jar")).filter(x=>x.isFile).map(x=>x.name).filter(x=>!x.startsWith('META-INF/'))){
       if(f in plugins_files_table){
-        plugins_files_table[f].push("__PAPERMC")
+        plugins_files_table[f].push("__MC")
       }else{
-        plugins_files_table[f] = ["__PAPERMC"]}}
+        plugins_files_table[f] = ["__MC"]}}
     for(const p in plugins_table){
       const dupres_path = "pluginsResources/"+p
       await mkdir("-p", dupres_path)
@@ -406,8 +406,8 @@ public class GetVersion {
         await rm("-f", dupclasses)
         await execaToStdIO("7z", ["x", jarpath].concat(dupclasses))}
       await execaToStdIO("7z", ["x", "-o"+dupres_path, jarpath].concat(dupfiles))}
-    await execaToStdIO("7z", ["x", "-y", "../../dist/papermc.jar"])
-    await rm("-fr", "../../dist/papermc.jar", "../../dist/plugins/*.jar")}
+    await execaToStdIO("7z", ["x", "-y", "../../dist/mc.jar"])
+    await rm("-fr", "../../dist/mc.jar", "../../dist/plugins/*.jar")}
 
     const classes_to_remove = [
       "org/bukkit/plugin/java/JavaPluginLoader", "org/bukkit/plugin/java/PluginClassLoader", // librarify_papermc.patch
@@ -510,12 +510,12 @@ public class GetVersion {
     console.log(`compiling ...`)
     await execaToStdIO("javac", ["-cp", "../annotations.jar:."].concat(java_files_to_compile))
     await rm(java_files_to_compile)
-    console.log("repacking papermc ...")
-    await execaToStdIO("7z", ["a", "-r", "../../dist/papermc.jar", "."])
+    console.log("repacking mc.jar ...")
+    await execaToStdIO("7z", ["a", "-r", "../../dist/mc.jar", "."])
   await popd()
   await rm("-fr", "tmp")
   await make_files_list()}
-async function minify_plugins(){ for(const jar of (await ls("dist/plugins/*.jar")).concat(["dist/papermc.jar"])){
+async function minify_plugins(){ for(const jar of (await ls("dist/plugins/*.jar")).concat(["dist/mc.jar"])){
   const to_remove = (await lsZip(jar)).filter(x=>x.isFile).map(x=>x.name).filter(x=>x.endsWith(".java")||x==='changelog.txt'||x==='LICENSE'||x==='License.txt'||x.startsWith('licenses/'))
   if(to_remove.length !== 0){
     console.log(`${jar}: removing ${to_remove.join(" ")} ...`)

@@ -3,24 +3,24 @@ set -e
 rm -fr tmp
 
 mkdir -p tmp/dist
-cp dist/papermc.jar tmp/dist/
+cp dist/mc.jar tmp/dist/
 echo 'eula=true' > tmp/dist/eula.txt
 # for FastLogin and Auth plugins
 echo 'online-mode=false' > tmp/dist/server.properties
 
-rm dist/papermc.jar
+rm dist/mc.jar
 cd tmp
   # https://github.com/mageddo/graalvm-examples/blob/492a43bb83984e613a67230aa384198600d7152f/sqlite/build.gradle
   curl -Lo graal-sdk.jar https://repo1.maven.org/maven2/org/graalvm/sdk/graal-sdk/20.0.0/graal-sdk-20.0.0.jar
   curl -Lo svm.jar https://repo1.maven.org/maven2/com/oracle/substratevm/svm/19.2.1/svm-19.2.1.jar
-  mkdir papermc
-  cd papermc
+  mkdir mc
+  cd mc
     mkdir -p com/mageddo/sqlite
     curl -Lo com/mageddo/sqlite/JNIReflectionClasses.java https://github.com/mageddo/graalvm-examples/raw/492a43bb83984e613a67230aa384198600d7152f/sqlite/src/main/java/com/mageddo/sqlite/JNIReflectionClasses.java
     curl -Lo com/mageddo/sqlite/ReflectionClasses.java https://github.com/mageddo/graalvm-examples/raw/492a43bb83984e613a67230aa384198600d7152f/sqlite/src/main/java/com/mageddo/sqlite/ReflectionClasses.java
-    javac -cp '.:../dist/papermc.jar:../graal-sdk.jar:../svm.jar' -d ../config-classes com/mageddo/sqlite/JNIReflectionClasses.java com/mageddo/sqlite/ReflectionClasses.java
+    javac -cp '.:../dist/mc.jar:../graal-sdk.jar:../svm.jar' -d ../config-classes com/mageddo/sqlite/JNIReflectionClasses.java com/mageddo/sqlite/ReflectionClasses.java
   cd ../config-classes
-    7z a -r ../dist/papermc.jar .
+    7z a -r ../dist/mc.jar .
 cd ../..
 cd tmp/dist
 
@@ -38,13 +38,13 @@ plugin.registerEvent("ServerLoadEvent", function(...)
   s:shutdown()
 end)
 EOF
-java -agentlib:native-image-agent=experimental-class-loader-support,config-output-dir=nativeimage-build-config -jar papermc.jar
+java -agentlib:native-image-agent=experimental-class-loader-support,config-output-dir=nativeimage-build-config -jar mc.jar
 # native-image-agent not tracing
-7z l -ba -slt papermc.jar | grep '^Path ' | awk '{print $3;}' |
+7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}' |
   grep '^net/minecraft/server/v1_15_R1/Packet.*\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../packets_classes
-7z l -ba -slt papermc.jar | grep '^Path ' | awk '{print $3;}' |
+7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}' |
   grep '^protocolsupport/.*\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../protocolsupport_classes
-7z l -ba -slt papermc.jar | grep '^Path ' | awk '{print $3;}' |
+7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}' |
   grep '^org/bukkit/event/.*Event\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../lukkit_event_classes
 node << 'EOF'
 const fs = require('fs')
@@ -160,7 +160,7 @@ buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.eli
 # "-H:+UseLowLatencyGC" requires GraalVM Enterprise, so not enabled
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
-native-image -cp papermc.jar \
+native-image -cp mc.jar \
   --no-server -J-Xms10G -J-Xmx16G \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
@@ -174,32 +174,32 @@ native-image -cp papermc.jar \
   "--initialize-at-build-time=pluginsResourcesMock,$(echo "$buildtimeinits" | sed 's| |,|g')" \
   --allow-incomplete-classpath \
   --enable-url-protocols=http,https \
-  -H:Name=papermc \
+  -H:Name=mc \
   -H:Class=org.bukkit.craftbukkit.Main
-strip -s papermc
+strip -s mc
 compress_upx() {
 curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz | tar -xJvC .. --strip-components=1 upx-3.96-amd64_linux/upx
-../upx papermc
+../upx mc
 }
 compress_appimage(){
 curl -Lo ../appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
 chmod +x ../appimagetool
-mkdir ../papermc.AppDir
-mv papermc ../papermc.AppDir/AppRun
-cat << 'EOF' > ../papermc.AppDir/papermc.desktop
+mkdir ../mc.AppDir
+mv mc ../mc.AppDir/AppRun
+cat << 'EOF' > ../mc.AppDir/mc.desktop
 [Desktop Entry]
-Name=papermc
-Exec=papermc
-Icon=papermc
+Name=mc
+Exec=mc
+Icon=mc
 Type=Application
 Categories=Utility;
 EOF
-curl -Lo ../papermc.AppDir/papermc.png 'https://avatars2.githubusercontent.com/u/7608950?s=200&v=4' # https://github.com/PaperMC
-../appimagetool ../papermc.AppDir papermc
+curl -Lo ../mc.AppDir/mc.png 'https://avatars2.githubusercontent.com/u/7608950?s=200&v=4' # https://github.com/PaperMC
+../appimagetool ../mc.AppDir mc
 }
 # compress_upx
 
 cd ../..
-cp -r tmp/dist/nativeimage-build-config tmp/dist/papermc dist/
+cp -r tmp/dist/nativeimage-build-config tmp/dist/mc dist/
 rm -fr tmp
 ./make_files_list.sh
