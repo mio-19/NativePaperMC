@@ -1,0 +1,15 @@
+build_task:
+  container:
+    dockerfile: Dockerfile-CI
+    cpu: 8
+    memory: 24G
+  node_modules_cache:
+    folder: node_modules
+    fingerprint_script: cat package-lock.json
+    populate_script: npm install
+  download_jar_script: |
+    wget -O dist.zip https://api.cirrus-ci.com/v1/artifact/github/The-Unstable-World/minecraft_The-Unstable-World/build/jar.zip &&
+    7z x dist.zip
+  build_script: ./task.nativeimage.sh
+  nativeimage_artifacts:
+    path: "dist/**/*"
