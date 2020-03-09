@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e
-./librarify_papermc.sh
+./librarify_mc.sh
 ./build.nativeimage.sh

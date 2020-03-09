@@ -76,16 +76,16 @@ async function execaToStdIO(...args){
   r.stderr.pipe(process.stderr)
   return await r}
 
-async function librarify_papermc(){
-  //await librarify_papermc_patch_worldedit()
-  await librarify_papermc_patch_fawe()
-  await librarify_papermc_patch_QualityArmoryVehicles()
+async function librarify_mc(){
+  //await librarify_mc_patch_worldedit()
+  await librarify_mc_patch_fawe()
+  await librarify_mc_patch_QualityArmoryVehicles()
   await plugins_processClass()
-  await librarify_papermc_main()
+  await librarify_mc_main()
 }
-async function librarify_papermc_patch_QualityArmoryVehicles(){
+async function librarify_mc_patch_QualityArmoryVehicles(){
   await await execaToStdIO("7z", ["d", "dist/plugins/QualityArmoryVehicles.jar"].concat("me/zombie_striker/customitemmanager/AbstractItem.class me/zombie_striker/customitemmanager/AbstractItemFact.class me/zombie_striker/customitemmanager/CustomBaseObject.class me/zombie_striker/customitemmanager/CustomItemManager.class me/zombie_striker/customitemmanager/MaterialStorage.class me/zombie_striker/customitemmanager/versions/V1_13/ItemFactory.class me/zombie_striker/customitemmanager/versions/V1_14/ItemFactory.class".split(" ")))}
-/*async function librarify_papermc_patch_worldedit(){
+/*async function librarify_mc_patch_worldedit(){
   await rm("-fr", "tmp")
   await mkdir("tmp")
   await pushd("tmp")
@@ -127,7 +127,7 @@ public class BukkitImplLoader {
     await execaToStdIO("7z", ["a", "-r", "../dist/plugins/WorldEdit.jar", "."])
   await popd()
   await rm("-fr", "tmp")}*/
-async function librarify_papermc_patch_fawe(){
+async function librarify_mc_patch_fawe(){
   await rm("-fr", "tmp")
   await mkdir("tmp")
   await pushd("tmp")
@@ -361,7 +361,7 @@ async function papermc_plugins_reslove_depend(){
     sorted_plugins = sorted_plugins.concat(plugins_to_load)
     plugins = next_plugins}
   return [sorted_plugins, plugins_table]}
-async function librarify_papermc_main(){
+async function librarify_mc_main(){
   const [sorted_plugins, plugins_table] = await papermc_plugins_reslove_depend()
   const fernflower_options = "-dgs=1 -hdc=0 -asc=1 -udv=0 -rsy=1 -aoa=1".split(" ") // MC1.15.2
   await rm("-fr", "tmp")
@@ -551,5 +551,5 @@ async function get_files_list(path){
 async function make_files_list(){
   await touch("dist/files.list") // include `files.list` itself.
   await writeFile("dist/files.list", (await get_files_list("dist")).join(" "))}
-exports.librarify_papermc = package_async_program(librarify_papermc)
+exports.librarify_mc = package_async_program(librarify_mc)
 exports.make_files_list = package_async_program(make_files_list)
