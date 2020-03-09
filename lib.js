@@ -510,6 +510,7 @@ public class GetVersion {
     console.log(`compiling ...`)
     await execaToStdIO("javac", ["-cp", "../annotations.jar:."].concat(java_files_to_compile))
     await rm(java_files_to_compile)
+    await rm("-fr", java_files_to_compile.map(x=>x+".orig"))
     console.log("repacking mc.jar ...")
     await execaToStdIO("7z", ["a", "-r", "../../dist/mc.jar", "."])
   await popd()
