@@ -123,6 +123,15 @@ reflconf["com.sk89q.worldedit.registry.state.PropertyKey"] = {
 // EssentialsX
 for(const x of lines_of('../essentials_commands_classes')) {
   maybe_refl_add(x, {"methods": [{ "name": "<init>","parameterTypes": [] }]})}
+// ServerListPlus
+for(const x of [
+  "net.minecrell.serverlistplus.core.config.ServerStatusConf",
+  "net.minecrell.serverlistplus.core.config.PluginConf",
+  "net.minecrell.serverlistplus.core.config.UnknownConf",
+  "net.minecrell.serverlistplus.core.config.PersonalizedStatusConf",
+  "net.minecrell.serverlistplus.core.config.CoreConf",
+  ]){
+  maybe_refl_add(x, {"methods": [{ "name": "<init>","parameterTypes": [] }]})}
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
   "fields": [
