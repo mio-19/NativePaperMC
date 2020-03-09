@@ -40,14 +40,17 @@ end)
 EOF
 java -agentlib:native-image-agent=experimental-class-loader-support,config-output-dir=nativeimage-build-config -jar mc.jar
 # native-image-agent not tracing
-7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}' |
-  grep '^net/minecraft/server/v1_15_R1/Packet.*\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../packets_classes
-7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}' |
-  grep '^protocolsupport/.*\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../protocolsupport_classes
-7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}' |
-  grep '^org/bukkit/event/.*Event\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../lukkit_event_classes
-7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}' |
-  grep '^com/earth2me/essentials/commands/Command.*\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../essentials_commands_classes
+mc_files(){
+  7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}'
+}
+classes_names(){
+  sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g'
+}
+mc_files | grep '^net/minecraft/server/v1_15_R1/Packet.*\.class$' | classes_names > ../packets_classes
+mc_files | grep '^protocolsupport/.*\.class$' | classes_names > ../protocolsupport_classes
+mc_files | grep '^org/bukkit/event/.*Event\.class$' | classes_names > ../lukkit_event_classes
+mc_files | grep '^com/earth2me/essentials/commands/Command.*\.class$' | classes_names > ../essentials_commands_classes
+mc_files | grep '^net/minecrell/serverlistplus/core/config/.*Conf\.class$' | classes_names > ../serverlistplus_config_classes
 node << 'EOF'
 const fs = require('fs')
 const path = 'nativeimage-build-config/reflect-config.json'
@@ -124,13 +127,7 @@ reflconf["com.sk89q.worldedit.registry.state.PropertyKey"] = {
 for(const x of lines_of('../essentials_commands_classes')) {
   maybe_refl_add(x, {"methods": [{ "name": "<init>","parameterTypes": [] }]})}
 // ServerListPlus
-for(const x of [
-  "net.minecrell.serverlistplus.core.config.ServerStatusConf",
-  "net.minecrell.serverlistplus.core.config.PluginConf",
-  "net.minecrell.serverlistplus.core.config.UnknownConf",
-  "net.minecrell.serverlistplus.core.config.PersonalizedStatusConf",
-  "net.minecrell.serverlistplus.core.config.CoreConf",
-  ]){
+for(const x of lines_of('../serverlistplus_config_classes')){
   maybe_refl_add(x, {})
   if(!reflconf[x].allPublicConstructors) {
     reflconf[x].methods = reflconf[x].methods || []
