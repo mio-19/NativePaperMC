@@ -1,20 +1,20 @@
-From 7bc9d1094da3347b55d3ad4b06dea5c226a28452 Mon Sep 17 00:00:00 2001
+From fe5e0343a6e35854a02b9ac749ef2318684411a6 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
  <tsao-chi@the-lingo.org>
-Date: Sun, 8 Mar 2020 13:01:35 +0800
+Date: Mon, 9 Mar 2020 13:21:33 +0800
 Subject: [PATCH] patch
 
 ---
- com/boydti/fawe/Fawe.java                     | 14 +------
- com/boydti/fawe/util/ReflectionUtils.java     | 15 ++++---
- .../worldedit/bukkit/WorldEditPlugin.java     | 42 -------------------
- 3 files changed, 8 insertions(+), 63 deletions(-)
+ com/boydti/fawe/Fawe.java                     | 14 +---
+ com/boydti/fawe/util/ReflectionUtils.java     | 15 ++--
+ .../worldedit/bukkit/WorldEditPlugin.java     | 73 +------------------
+ 3 files changed, 12 insertions(+), 90 deletions(-)
 
 diff --git a/com/boydti/fawe/Fawe.java b/com/boydti/fawe/Fawe.java
-index 284feb36..5211501e 100644
+index 8eacc1c0..75d03a5a 100644
 --- a/com/boydti/fawe/Fawe.java
 +++ b/com/boydti/fawe/Fawe.java
-@@ -55,7 +55,7 @@ public class Fawe {
+@@ -56,7 +56,7 @@ public class Fawe {
      private Thread thread;
  
      public static <T extends IFawe> T imp() {
@@ -23,7 +23,7 @@ index 284feb36..5211501e 100644
      }
  
      public static Fawe get() {
-@@ -298,18 +298,6 @@ public class Fawe {
+@@ -299,18 +299,6 @@ public class Fawe {
                  debug("===============================================");
              }
          }
@@ -97,7 +97,7 @@ index eb45cf34..01cfd04a 100644
              throw new RuntimeException(exception);
          }
 diff --git a/com/sk89q/worldedit/bukkit/WorldEditPlugin.java b/com/sk89q/worldedit/bukkit/WorldEditPlugin.java
-index d151c635..10375fd7 100644
+index d151c635..254b93e7 100644
 --- a/com/sk89q/worldedit/bukkit/WorldEditPlugin.java
 +++ b/com/sk89q/worldedit/bukkit/WorldEditPlugin.java
 @@ -75,7 +75,6 @@ import org.bukkit.plugin.Plugin;
@@ -163,6 +163,45 @@ index d151c635..10375fd7 100644
      }
  
      private void fail(Runnable runnable, String s) {
+@@ -376,34 +334,11 @@ public class WorldEditPlugin extends JavaPlugin {
+ 
+         if (!file.exists()) {
+             try {
+-                JarFile jarfile = new JarFile(this.getFile());
+-                Throwable throwable = null;
+-
+-                try {
+-                    ZipEntry zipentry = jarfile.getEntry("defaults/" + s);
+-
+-                    if (zipentry == null) {
+-                        throw new FileNotFoundException();
+-                    }
+-
+-                    this.copyDefaultConfig(jarfile.getInputStream(zipentry), file, s);
+-                } catch (Throwable throwable1) {
+-                    throwable = throwable1;
+-                    throw throwable1;
+-                } finally {
+-                    if (jarfile != null) {
+-                        if (throwable != null) {
+-                            try {
+-                                jarfile.close();
+-                            } catch (Throwable throwable2) {
+-                                throwable.addSuppressed(throwable2);
+-                            }
+-                        } else {
+-                            jarfile.close();
+-                        }
+-                    }
+-
++                InputStream stream = this.getResource("defaults/" + s);
++                if (stream == null) {
++                    throw new FileNotFoundException();
+                 }
++                this.copyDefaultConfig(stream, file, s);
+             } catch (IOException ioexception) {
+                 this.getLogger().severe("Unable to read default configuration: " + s);
+             }
 -- 
 2.25.1
 

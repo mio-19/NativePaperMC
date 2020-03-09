@@ -46,6 +46,8 @@ java -agentlib:native-image-agent=experimental-class-loader-support,config-outpu
   grep '^protocolsupport/.*\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../protocolsupport_classes
 7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}' |
   grep '^org/bukkit/event/.*Event\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../lukkit_event_classes
+7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}' |
+  grep '^com/earth2me/essentials/commands/Command.*\.class$' | sed 's|^\(.*\)\.class|\1|g' | sed 's|/|.|g' > ../essentials_commands_classes
 node << 'EOF'
 const fs = require('fs')
 const path = 'nativeimage-build-config/reflect-config.json'
@@ -119,7 +121,8 @@ reflconf["com.sk89q.worldedit.registry.state.PropertyKey"] = {
   "fields": [ { "name": "id", "allowWrite": true } ]}
 // WorldEdit and FAWE End
 // EssentialsX
-maybe_refl_add("com.earth2me.essentials.commands.Commandhelp", {"methods": [{ "name": "<init>","parameterTypes": [] }]})
+for(const x of lines_of('../essentials_commands_classes')) {
+  maybe_refl_add(x, {"methods": [{ "name": "<init>","parameterTypes": [] }]})}
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
   "fields": [

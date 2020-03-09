@@ -122,7 +122,7 @@ public class BukkitImplLoader {
         throw new AdapterLoadException(${JSON.stringify(LOAD_ERROR_MESSAGE)});
     }
 }`)
-    await execaToStdIO("javac", ["-cp", "../dist/papermc.jar:.", "com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java"])
+    await execaToStdIO("javac", ["-cp", "../dist/mc.jar:.", "com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java"])
     await rm("com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java", "../dist/plugins/WorldEdit.jar")
     await execaToStdIO("7z", ["a", "-r", "../dist/plugins/WorldEdit.jar", "."])
   await popd()
@@ -165,7 +165,7 @@ public class BukkitImplLoader {
         throw new AdapterLoadException(${JSON.stringify(LOAD_ERROR_MESSAGE)});
     }
 }`)
-    await execaToStdIO("javac", ["-cp", "../dist/papermc.jar:.", "com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java"])
+    await execaToStdIO("javac", ["-cp", "../dist/mc.jar:.", "com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java"])
     await rm("com/sk89q/worldedit/bukkit/adapter/BukkitImplLoader.java", "DummyFawe.src", "../dist/plugins/FastAsyncWorldEdit.jar")
     await execaToStdIO("7z", ["a", "-r", "../dist/plugins/FastAsyncWorldEdit.jar", "."])
   await popd()
