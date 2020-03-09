@@ -14,11 +14,11 @@ ARG GRAALVM_PKG="https://web.archive.org/web/20200228064159/https%3A%2F%2Fdownlo
 #ARG NATIVEIMAGE_PKG=https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-$GRAALVM_VERSION/native-image-installable-svm-$JAVA_VERSION-linux-$GRAALVM_ARCH-$GRAALVM_VERSION.jar
 ARG NATIVEIMAGE_PKG="https://web.archive.org/web/20200228083230/https%3A%2F%2Fdownload.oracle.com%2Fotn%2Futilities_drivers%2Foracle-labs%2Fnative-image-installable-svm-svmee-java11-linux-amd64-20.0.0.jar%3FAuthParam%3D1582878853_656f39126124eddc70c07568cddaf024"
 
-ENV JAVA_HOME=/opt/graalvm-ce-$JAVA_VERSION-$GRAALVM_VERSION
+#ENV JAVA_HOME=/opt/graalvm-ce-$JAVA_VERSION-$GRAALVM_VERSION
+ENV JAVA_HOME=/opt/graalvm-ee-$JAVA_VERSION-$GRAALVM_VERSION
 ENV PATH=$PATH:$JAVA_HOME/bin
 
 RUN mkdir -p "${JAVA_HOME}" && curl -L "${GRAALVM_PKG}" | tar --strip-components=1 -xzvC "${JAVA_HOME}"
 
 #RUN gu install native-image
-
 RUN curl -Lo /tmp/nativeimage.jar "${NATIVEIMAGE_PKG}" && gu install /tmp/nativeimage.jar && rm /tmp/nativeimage.jar
