@@ -131,7 +131,10 @@ for(const x of [
   "net.minecrell.serverlistplus.core.config.PersonalizedStatusConf",
   "net.minecrell.serverlistplus.core.config.CoreConf",
   ]){
-  maybe_refl_add(x, {"methods": [{ "name": "<init>","parameterTypes": [] }]})}
+  maybe_refl_add(x, {})
+  if(!reflconf[x].allPublicConstructors) {
+    reflconf[x].methods = reflconf[x].methods || []
+    reflconf[x].methods.push({"name":"<init>","parameterTypes": []})}}
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
   "fields": [
