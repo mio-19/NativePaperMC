@@ -1,7 +1,7 @@
 build_task:
   container:
     dockerfile: Dockerfile-CI
-    cpu: 8
+    cpu: 1
     memory: 24G
   node_modules_cache:
     folder: node_modules
