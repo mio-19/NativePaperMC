@@ -1,0 +1,20 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    env:
+      JAVA_HOME: /opt/graalvm
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up GraalVM and nativeimage
+      env:
+        GRAALVM_PKG: "https://web.archive.org/web/20200228064159/https%3A%2F%2Fdownload.oracle.com%2Fotn%2Futilities_drivers%2Foracle-labs%2Fgraalvm-ee-java11-linux-amd64-20.0.0.tar.gz%3FAuthParam%3D1582872216_1c709e264459fe8f38146174374aa6b8"
+        NATIVEIMAGE_PKG: "https://web.archive.org/web/20200228083230/https%3A%2F%2Fdownload.oracle.com%2Fotn%2Futilities_drivers%2Foracle-labs%2Fnative-image-installable-svm-svmee-java11-linux-amd64-20.0.0.jar%3FAuthParam%3D1582878853_656f39126124eddc70c07568cddaf024"
+      run: |
+        mkdir -p "${JAVA_HOME}" && curl -L "${GRAALVM_PKG}" | tar --strip-components=1 -xzvC "${JAVA_HOME}" &&
+        curl -Lo /tmp/nativeimage.jar "${NATIVEIMAGE_PKG}" && gu install /tmp/nativeimage.jar && rm /tmp/nativeimage.jar
