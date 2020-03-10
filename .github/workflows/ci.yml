@@ -31,6 +31,14 @@ jobs:
         path: ~/.npm
         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: ${{ runner.os }}-node-
+    - name: Set up swap
+      run: |
+        sudo fallocate -l 8G /ADDTIONAL_SWAP_FILE
+        sudo chmod 600 /ADDTIONAL_SWAP_FILE
+        sudo mkswap /ADDTIONAL_SWAP_FILE
+        sudo swapon /ADDTIONAL_SWAP_FILE
+        free # should be 8G+8G=16GB swap
+        df /
     - name: Build
       run: |
         export PATH="$PATH:$JAVA_HOME/bin"
