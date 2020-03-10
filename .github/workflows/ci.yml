@@ -23,14 +23,12 @@ jobs:
         GRAALVM_PKG: "https://web.archive.org/web/20200228064159/https%3A%2F%2Fdownload.oracle.com%2Fotn%2Futilities_drivers%2Foracle-labs%2Fgraalvm-ee-java11-linux-amd64-20.0.0.tar.gz%3FAuthParam%3D1582872216_1c709e264459fe8f38146174374aa6b8"
         NATIVEIMAGE_PKG: "https://web.archive.org/web/20200228083230/https%3A%2F%2Fdownload.oracle.com%2Fotn%2Futilities_drivers%2Foracle-labs%2Fnative-image-installable-svm-svmee-java11-linux-amd64-20.0.0.jar%3FAuthParam%3D1582878853_656f39126124eddc70c07568cddaf024"
       run: |
-        export PATH="$PATH:$JAVA_HOME/bin"
+        export PATH="$JAVA_HOME/bin:$PATH"
         sudo mkdir -p "${JAVA_HOME}" && curl -L "${GRAALVM_PKG}" | sudo tar --strip-components=1 -xzvC "${JAVA_HOME}"
         curl -Lo /tmp/nativeimage.jar "${NATIVEIMAGE_PKG}" && sudo "${JAVA_HOME}/bin/gu" -L install /tmp/nativeimage.jar && rm /tmp/nativeimage.jar
-    - uses: actions/cache@v1
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: ${{ runner.os }}-node-
+    - name: Set up yq
+      run: |
+        sudo curl -Lo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/3.2.1/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq
     - name: Set up swap
       run: |
         sudo fallocate -l 8G /ADDTIONAL_SWAP_FILE
@@ -39,8 +37,13 @@ jobs:
         sudo swapon /ADDTIONAL_SWAP_FILE
         free # should be 8G+8G=16GB swap
         df /
+    - uses: actions/cache@v1
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: ${{ runner.os }}-node-
     - name: Build
       run: |
-        export PATH="$PATH:$JAVA_HOME/bin"
+        export PATH="$JAVA_HOME/bin:$PATH"
         curl -Lo dist.zip https://api.cirrus-ci.com/v1/artifact/github/The-Unstable-World/minecraft_The-Unstable-World/build/jar.zip && 7z x dist.zip
         ./task.nativeimage.sh
