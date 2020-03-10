@@ -174,7 +174,7 @@ buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.eli
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
 native-image -cp mc.jar \
   -H:+UseLowLatencyGC \
-  --no-server -J-Xms5G -J-Xmx16G \
+  --no-server -J-Xms5G -J-Xmx17G \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
   -Dfile.encoding=UTF-8 \
