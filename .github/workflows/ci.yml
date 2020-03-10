@@ -35,8 +35,8 @@ jobs:
         sudo chmod 600 /ADDTIONAL_SWAP_FILE
         sudo mkswap /ADDTIONAL_SWAP_FILE
         sudo swapon /ADDTIONAL_SWAP_FILE
-        free # should be 8G+8G=16GB swap
-        df /
+        free # should be 7G RAM, 8G+8G=16GB swap
+        df / # should be 9.5G free space
     - uses: actions/cache@v1
       with:
         path: ~/.npm

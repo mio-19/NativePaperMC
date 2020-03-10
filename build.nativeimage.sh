@@ -173,7 +173,7 @@ buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.eli
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
 native-image -cp mc.jar \
-  --no-server -J-Xms5G -J-Xmx13G \
+  --no-server -J-Xms5G -J-Xmx10G \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
   -Dfile.encoding=UTF-8 \
