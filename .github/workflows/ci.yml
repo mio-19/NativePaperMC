@@ -25,7 +25,7 @@ jobs:
       run: |
         export PATH="$PATH:$JAVA_HOME/bin"
         sudo mkdir -p "${JAVA_HOME}" && curl -L "${GRAALVM_PKG}" | sudo tar --strip-components=1 -xzvC "${JAVA_HOME}"
-        curl -Lo /tmp/nativeimage.jar "${NATIVEIMAGE_PKG}" && sudo "${JAVA_HOME}/bin/gu" install /tmp/nativeimage.jar && rm /tmp/nativeimage.jar
+        curl -Lo /tmp/nativeimage.jar "${NATIVEIMAGE_PKG}" && sudo "${JAVA_HOME}/bin/gu" -L install /tmp/nativeimage.jar && rm /tmp/nativeimage.jar
     - uses: actions/cache@v1
       with:
         path: ~/.npm

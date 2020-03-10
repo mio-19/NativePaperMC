@@ -21,4 +21,4 @@ ENV PATH=$PATH:$JAVA_HOME/bin
 RUN mkdir -p "${JAVA_HOME}" && curl -L "${GRAALVM_PKG}" | tar --strip-components=1 -xzvC "${JAVA_HOME}"
 
 #RUN gu install native-image
-RUN curl -Lo /tmp/nativeimage.jar "${NATIVEIMAGE_PKG}" && gu install /tmp/nativeimage.jar && rm /tmp/nativeimage.jar
+RUN curl -Lo /tmp/nativeimage.jar "${NATIVEIMAGE_PKG}" && gu -L install /tmp/nativeimage.jar && rm /tmp/nativeimage.jar
