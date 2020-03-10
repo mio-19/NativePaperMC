@@ -26,6 +26,11 @@ jobs:
         export PATH="$PATH:$JAVA_HOME/bin"
         mkdir -p "${JAVA_HOME}" && curl -L "${GRAALVM_PKG}" | tar --strip-components=1 -xzvC "${JAVA_HOME}"
         curl -Lo /tmp/nativeimage.jar "${NATIVEIMAGE_PKG}" && gu install /tmp/nativeimage.jar && rm /tmp/nativeimage.jar
+    - uses: actions/cache@v1
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: ${{ runner.os }}-node-
     - name: Build
       run: |
         export PATH="$PATH:$JAVA_HOME/bin"
