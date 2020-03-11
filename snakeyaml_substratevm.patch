@@ -5,13 +5,13 @@ Date: Wed, 11 Mar 2020 19:17:42 +0800
 Subject: [PATCH] patch
 
 ---
- tmp/classes/org/yaml/snakeyaml/introspector/FieldProperty.java | 2 +-
+ org/yaml/snakeyaml/introspector/FieldProperty.java | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tmp/classes/org/yaml/snakeyaml/introspector/FieldProperty.java b/tmp/classes/org/yaml/snakeyaml/introspector/FieldProperty.java
+diff --git a/org/yaml/snakeyaml/introspector/FieldProperty.java b/org/yaml/snakeyaml/introspector/FieldProperty.java
 index 9d2d7818..8400d60f 100644
---- a/tmp/classes/org/yaml/snakeyaml/introspector/FieldProperty.java
-+++ b/tmp/classes/org/yaml/snakeyaml/introspector/FieldProperty.java
+--- a/org/yaml/snakeyaml/introspector/FieldProperty.java
++++ b/org/yaml/snakeyaml/introspector/FieldProperty.java
 @@ -17,7 +17,7 @@ public class FieldProperty extends GenericProperty {
      }
  
