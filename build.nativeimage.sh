@@ -172,7 +172,6 @@ buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.eli
 # # "-H:+UseLowLatencyGC" requires GraalVM Enterprise, so not enabled
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
-7z d mc.jar META-INF
 native-image -cp mc.jar \
   -H:+UseLowLatencyGC \
   --no-server -J-Xms5G -J-Xmx17G \
