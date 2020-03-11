@@ -132,6 +132,8 @@ for(const x of lines_of('../serverlistplus_config_classes')){
   if(!reflconf[x].allPublicConstructors) {
     reflconf[x].methods = reflconf[x].methods || []
     reflconf[x].methods.push({"name":"<init>","parameterTypes": []})}}
+// ServerListPlus
+refl_add("net.minecrell.serverlistplus.core.util.TimeUnitValue", {"methods": [{ "name": "<init>" }]})}
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
   "fields": [
@@ -169,11 +171,11 @@ buildtimeinits="$buildtimeinits protocolsupport.protocol.utils.minecraftdata.Min
 buildtimeinits="$buildtimeinits com.sk89q.worldedit.command.util.annotation"
 # Negativity
 buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.elikill58.negativity.universal.Cheat com.elikill58.negativity.spigot.inventories.CheckMenuInventory com.elikill58.negativity.universal.NegativityPlayer com.elikill58.negativity.spigot.SpigotNegativityPlayer com.elikill58.negativity.spigot.events.FightManager com.elikill58.negativity.universal.FlyingReason com.elikill58.negativity.spigot.timers.TimerAnalyzePacket "'com.elikill58.negativity.universal.Stats$StatsType'
-# # "-H:+UseLowLatencyGC" requires GraalVM Enterprise, so not enabled
+# "-H:+UseLowLatencyGC" requires GraalVM Enterprise, so not enabled
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
 native-image -cp mc.jar \
-  -H:+UseLowLatencyGC \
+  #-H:+UseLowLatencyGC \
   --no-server -J-Xms5G -J-Xmx17G \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
