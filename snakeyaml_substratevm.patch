@@ -1,23 +1,24 @@
-From ab05af0a7d2eb509962b6e292001097aa8b6301c Mon Sep 17 00:00:00 2001
+From 97f52ff405b51493d6d56dc1842ed9e557caaf75 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?=E3=84=97=E3=84=A0=CB=8B=20=E3=84=91=E3=84=A7=CB=8A?=
  <tsao-chi@the-lingo.org>
-Date: Wed, 11 Mar 2020 19:17:42 +0800
+Date: Wed, 11 Mar 2020 20:52:07 +0800
 Subject: [PATCH] patch
 
 ---
- org/yaml/snakeyaml/introspector/FieldProperty.java | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ org/yaml/snakeyaml/introspector/FieldProperty.java | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/org/yaml/snakeyaml/introspector/FieldProperty.java b/org/yaml/snakeyaml/introspector/FieldProperty.java
-index 9d2d7818..8400d60f 100644
+index 9d2d7818..f282b7dc 100644
 --- a/org/yaml/snakeyaml/introspector/FieldProperty.java
 +++ b/org/yaml/snakeyaml/introspector/FieldProperty.java
-@@ -17,7 +17,7 @@ public class FieldProperty extends GenericProperty {
+@@ -17,7 +17,8 @@ public class FieldProperty extends GenericProperty {
      }
  
      public void set(Object object, Object object1) throws Exception {
 -        this.field.set(object, object1);
-+        this.field.set(this.field.getDeclaringClass().cast(object), this.field.getType().cast(object1));
++        Class fieldType = this.field.getType();
++        this.field.set(this.field.getDeclaringClass().cast(object), fieldType.isPrimitive()?object1:fieldType.cast(object1));
      }
  
      public Object get(Object object) {
