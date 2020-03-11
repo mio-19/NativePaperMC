@@ -189,7 +189,7 @@ native-image -cp mc.jar \
   --enable-url-protocols=http,https \
   -H:Name=mc \
   -H:Class=org.bukkit.craftbukkit.Main
-strip -s mc
+strip --strip-all mc
 compress_upx() {
 curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz | tar -xJvC .. --strip-components=1 upx-3.96-amd64_linux/upx
 ../upx mc
