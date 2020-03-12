@@ -509,12 +509,6 @@ public class GetVersion {
     patches.push("substratevm_worldedit_permissions.patch")
   }
 
-  // for ServerListPlus
-  // Caused by: java.lang.IllegalArgumentException: cannot cast ...
-  // at org.yaml.snakeyaml.introspector.FieldProperty.set(FieldProperty.java:44) ~[?:?]
-  classes_to_patch.push("org/yaml/snakeyaml/introspector/FieldProperty")
-  patches.push("snakeyaml_substratevm.patch")
-
   await rm("-fr", paths_simply_remove)
 
   const java_files_to_compile = classes_to_patch.concat(classes_to_add).map(x => `${x}.java`)
