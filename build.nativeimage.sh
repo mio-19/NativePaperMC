@@ -77,8 +77,10 @@ for(const x of [
   "net.minecraft.server.v1_15_R1.VillagePlaceSection",
   "net.minecraft.server.v1_15_R1.DefinedStructurePiece"]) {
   maybe_refl_add(x, {})}
-refl_add("io.netty.channel.socket.nio.NioServerSocketChannel",{
-  "methods": [{"name":"<init>"}]})
+for(const x of [
+  "io.netty.util.ReferenceCountUtil",
+  "io.netty.channel.socket.nio.NioServerSocketChannel"]){
+  refl_add(x,{"methods": [{"name":"<init>"}]})}
 refl_add("com.google.common.cache.LocalCache$LocalLoadingCache",{
   // "methods": [{"name":"asMap"}] // (extends com.google.common.cache.LocalCache$LocalManualCache)
 })
