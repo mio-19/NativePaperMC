@@ -601,7 +601,7 @@ async function get_files_list(path) {
   const result = []
   for (const f of await find(".")) {
     if ((await stat(f)).isFile()) {
-      result.push("./" + f)
+      result.push(f)
     }
   }
   await popd()
