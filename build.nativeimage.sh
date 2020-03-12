@@ -34,11 +34,29 @@ author: Author
 EOF
 cat << 'EOF' > plugins/TMPStopAfterServerLoadEvent.lkt/main.lua
 plugin.registerEvent("ServerLoadEvent", function(...)
-  local s = plugin.getServer()
-  s:shutdown()
+  -- local s = plugin.getServer()
+  -- s:shutdown()
+  plugin.exportResource("main.lua") -- start the bot and then kill the server when the file appear
 end)
 EOF
-java -agentlib:native-image-agent=experimental-class-loader-support,config-output-dir=nativeimage-build-config -jar mc.jar
+
+java -agentlib:native-image-agent=experimental-class-loader-support,config-output-dir=nativeimage-build-config -jar mc.jar &
+JAVA_PID="$!"
+
+git clone https://github.com/ammaraskar/pyCraft.git
+cd pyCraft
+git checkout ff9a0813b64a0afdf3cd089ad9000350bb4122bc
+pip3 install -r requirements.txt
+until [ -f plugins/TMPStopAfterServerLoadEvent/main.lua ];do
+echo "server not fully started, wait another 10s ..."
+sleep 10s
+done
+(sleep 10s;echo)|python3 start.py -s localhost -o -u SomeOFFLINE_Name
+cd ..
+kill -SIGINT "$JAVA_PID"
+echo "SIGINT sent, wait until fully shutdown"
+wait "$JAVA_PID" || true
+
 # native-image-agent not tracing
 mc_files(){
   7z l -ba -slt mc.jar | grep '^Path ' | awk '{print $3;}'
@@ -78,7 +96,6 @@ for(const x of [
   "net.minecraft.server.v1_15_R1.DefinedStructurePiece"]) {
   maybe_refl_add(x, {})}
 for(const x of [
-  "io.netty.util.ReferenceCountUtil",
   "io.netty.channel.socket.nio.NioServerSocketChannel"]){
   refl_add(x,{"methods": [{"name":"<init>"}]})}
 refl_add("com.google.common.cache.LocalCache$LocalLoadingCache",{
