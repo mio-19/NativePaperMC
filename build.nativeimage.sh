@@ -5,7 +5,7 @@ rm -fr tmp
 mkdir -p tmp/dist
 cp dist/mc.jar tmp/dist/
 echo 'eula=true' > tmp/dist/eula.txt
-# for FastLogin and Auth plugins
+# for FastLogin and Auth plugins and the bot
 echo 'online-mode=false' > tmp/dist/server.properties
 
 rm dist/mc.jar
