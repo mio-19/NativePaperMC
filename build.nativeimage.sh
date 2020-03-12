@@ -51,6 +51,7 @@ until [ -f plugins/TMPStopAfterServerLoadEvent/main.lua ];do
 echo "server not fully started, wait another 10s ..."
 sleep 10s
 done
+echo "bot connect and disconnect in 10s ..."
 (sleep 10s;echo)|python3 start.py -s localhost -o -u SomeOFFLINE_Name
 cd ..
 kill -SIGINT "$JAVA_PID"
