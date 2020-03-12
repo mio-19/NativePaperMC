@@ -134,7 +134,9 @@ for(const x of lines_of('../serverlistplus_config_classes')){
     reflconf[x].methods = reflconf[x].methods || []
     reflconf[x].methods.push({"name":"<init>","parameterTypes": []})}}
 // ServerListPlus
-refl_add("net.minecrell.serverlistplus.core.util.TimeUnitValue", {"methods": [{ "name": "<init>" }]})
+for(const x of ["net.minecrell.serverlistplus.core.util.BooleanOrList",
+  "net.minecrell.serverlistplus.core.util.TimeUnitValue"]) {
+  refl_add(x, {"methods": [{ "name": "<init>" }]})}
 reflconf["org.bukkit.potion.PotionData"] = {
   // not traced: (for EssentialsX)
   "fields": [
