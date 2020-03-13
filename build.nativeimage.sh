@@ -69,10 +69,12 @@ echo "2 bot connect and disconnect in 30s ... (the bot will crash in 30s: 'EOFEr
 (
 sleep 5s
 $mcron 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon wither' 'summon wither' 'summon wither' 'summon pig' 'summon pig' 'summon pig'
+sleep 35s
+$mcron 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon wither' 'summon wither' 'summon wither' 'summon pig' 'summon pig' 'summon pig'
 ) &
-(sleep 30s|python3 start.py -s localhost -o -u SomeOFFLINE_Name) &
+(sleep 30s|python3 start.py -s localhost -o -u SomeOFFLINE_Name) || true
 BOT1_PID="$!"
-(sleep 30s|python3 start.py -s localhost -o -u admin) & # a online account
+(sleep 30s|python3 start.py -s localhost -o -u admin) || true # a online account
 BOT2_PID="$!"
 wait "$BOT1_PID" "$BOT2_PID" || true
 cd ..
@@ -229,12 +231,11 @@ buildtimeinits="$buildtimeinits protocolsupport.protocol.utils.minecraftdata.Min
 buildtimeinits="$buildtimeinits com.sk89q.worldedit.command.util.annotation"
 # Negativity
 buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.elikill58.negativity.universal.Cheat com.elikill58.negativity.spigot.inventories.CheckMenuInventory com.elikill58.negativity.universal.NegativityPlayer com.elikill58.negativity.spigot.SpigotNegativityPlayer com.elikill58.negativity.spigot.events.FightManager com.elikill58.negativity.universal.FlyingReason com.elikill58.negativity.spigot.timers.TimerAnalyzePacket "'com.elikill58.negativity.universal.Stats$StatsType'
-## "-H:+UseLowLatencyGC" requires GraalVM Enterprise and always crashes the server, so not enabled
+# "-H:+UseLowLatencyGC" requires GraalVM Enterprise and always crashes the server, so not enabled
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
 # "-H:IncludeResourceBundles=joptsimple.ExceptionMessages" is for illegal CLI options
 native-image -cp mc.jar \
-  -H:+UseLowLatencyGC \
   -H:CCompilerOption="-Os" \
   --no-server -J-Xms5G -J-Xmx15G \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
