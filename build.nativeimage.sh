@@ -236,8 +236,8 @@ buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.eli
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
 # "-H:IncludeResourceBundles=joptsimple.ExceptionMessages" is for illegal CLI options
 native-image -cp mc.jar \
-  -H:CCompilerOption="-Os" \
-  --no-server -J-Xms5G -J-Xmx15G \
+  -H:CCompilerOption="-Os" -H:+RemoveUnusedSymbols \
+  --no-server -J-Xms5G -J-Xmx15G -H:NumberOfThreads=8 \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
   -Dfile.encoding=UTF-8 \
@@ -252,7 +252,7 @@ native-image -cp mc.jar \
   --enable-url-protocols=http,https \
   -H:Name=mc \
   -H:Class=org.bukkit.craftbukkit.Main
-#strip --strip-all mc
+strip --strip-all mc
 compress_upx() {
 curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz | tar -xJvC .. --strip-components=1 upx-3.96-amd64_linux/upx
 ../upx mc
