@@ -51,11 +51,11 @@ until [ -f ../plugins/TMPStopAfterServerLoadEvent/main.lua ];do
 echo "server not fully started, wait another 10s ..."
 sleep 10s
 done
-echo "bot connect and disconnect in 10s ..."
-(sleep 10s;echo)|python3 start.py -s localhost -o -u SomeOFFLINE_Name
+echo "bot connect and disconnect in 10s ... (the bot will crash in 10s: 'EOFError: EOF when reading a line')"
+(sleep 10s|python3 start.py -s localhost -o -u SomeOFFLINE_Name) || true
 cd ..
 kill -SIGINT "$JAVA_PID"
-echo "SIGINT sent, wait until fully shutdown"
+echo "SIGINT sent, wait until the server fully shutdown"
 wait "$JAVA_PID" || true
 
 # native-image-agent not tracing
