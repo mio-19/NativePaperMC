@@ -219,7 +219,7 @@ native-image -cp mc.jar \
   --no-server -J-Xms5G -J-Xmx17G \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
-  -H:CCompilerOption="-Os -s" \
+  -H:CCompilerOption="-Os" \
   -Dfile.encoding=UTF-8 \
   -H:IncludeResources='^[^.]*$|^.*\.[^.]{0,4}$|^.*\.[^.]{6,}$|^.*\.[^.]{0}[^c][^.]{4}$|^.*\.[^.]{1}[^l][^.]{3}$|^.*\.[^.]{2}[^a][^.]{2}$|^.*\.[^.]{3}[^s][^.]{1}$|^.*\.[^.]{4}[^s][^.]{0}$' \
   -H:IncludeResourceBundles=messages,joptsimple.HelpFormatterMessages,joptsimple.ExceptionMessages \
@@ -232,7 +232,7 @@ native-image -cp mc.jar \
   --enable-url-protocols=http,https \
   -H:Name=mc \
   -H:Class=org.bukkit.craftbukkit.Main
-#strip --strip-all mc # already 'gcc -s'
+strip --strip-all mc
 compress_upx() {
 curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz | tar -xJvC .. --strip-components=1 upx-3.96-amd64_linux/upx
 ../upx mc
