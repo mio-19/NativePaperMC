@@ -56,6 +56,7 @@ git checkout b02201d689b3032bc681b28f175fd3d83d167293
 make
 make install
 cd ..
+mcron=mcrcon -H localhost -P 25575 -p rconpwd
 git clone https://github.com/ammaraskar/pyCraft.git
 cd pyCraft
 git checkout ff9a0813b64a0afdf3cd089ad9000350bb4122bc
@@ -65,10 +66,14 @@ echo "server not fully started, wait another 10s ..."
 sleep 10s
 done
 echo "2 bot connect and disconnect in 10s ... (the bot will crash in 10s: 'EOFError: EOF when reading a line')"
+(
+sleep 5s
+$mcron 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon wither' 'summon wither' 'summon pig'
+) &
 (sleep 10s|python3 start.py -s localhost -o -u SomeOFFLINE_Name) || true
 (sleep 10s|python3 start.py -s localhost -o -u admin) || true # a online account
 cd ..
-mcrcon -H localhost -P 25575 -p rconpwd "say Server is stopping!" stop
+$mcron "say Server is stopping!" stop
 echo "'stop' command sent, wait until the server fully shutdown"
 wait "$JAVA_PID" || true
 
@@ -203,11 +208,14 @@ EOF
 buildtimeinits="org.apache.http.HttpEntityEnclosingRequest org.apache.http.conn.ManagedHttpClientConnection org.apache.http.Header org.apache.http.client.methods.CloseableHttpResponse org.apache.http.StatusLine org.apache.http.HttpResponse org.apache.http.protocol.HttpContext org.apache.http.ProtocolVersion org.apache.http.HttpRequest org.apache.http.HttpEntity org.apache.http.params.HttpParams"
 # (partial) safe to initialize at build time
 buildtimeinits="$buildtimeinits org.bukkit.Bukkit org.bukkit.Material org.bukkit.NamespacedKey org.bukkit.potion.PotionType org.bukkit.potion.PotionEffectType org.bukkit.potion.PotionEffectTypeWrapper org.bukkit.craftbukkit.v1_15_R1.util.CraftLegacy org.bukkit.scheduler.BukkitRunnable net.md_5.bungee.chat com.google.common.collect com.google.common.base com.google.gson com.google.gson.internal com.google.gson.internal.bind com.google.gson.reflect"
-# (partial) safe to initialize at build time
-buildtimeinits_mc_server='BiomeManager BiomeManager$Provider DamageSource EntityAIBodyControl EntityBird EntityDamageSource EntityPose EntityPositionTypes EntityPositionTypes$a EntityPositionTypes$b EntityPositionTypes$Surface EntitySelector EntitySenses EntitySize EntitySlice EntityVillagerTrader EntityVillagerTrader$a EnumChatFormat IAttribute IBeaconBeam IBlockAccess IBlockFragilePlantElement IBlockState IBlockWaterlogged IChatBaseComponent IChunkLoader IChunkProvider ICollisionAccess ICommandListener ICompletionProvider IContainerProperties ICrafting ICrossbow IDispenseBehavior IDragonController IDyeable IDynamicTexture IEntityAccess IFluidContainer IFluidSource IHopper IInventory IInventoryHolder IInventoryListener IJumpable ILightAccess ILightEngine ILocationSource IMaterialIMerchant IMinecraftServer IMojangStatistics IMonster INamable INamableTileEntity IPlayerFileData IPosition IProgressUpdate IProjectile IRangedEntity IRecipe IRecipeComplex IReloadable IReloadableResourceManager IReloadListener IResourceManager IResourcePack IResourcePackListener IScoreboardCriteria IScoreboardCriteria$EnumScoreboardHealthDisplay ISource ISourceBlock IStructureAccess ITickable ITileEntity ITileEntityContainer ITileInventory IVectorPosition IWorldBorderListener IWorldBorderListener$a IWorldInventory IWorldReader IWorldWriter RecipeCrafting'
-for c in $buildtimeinits_mc_server ;do
-  buildtimeinits="$buildtimeinits net.minecraft.server.v1_15_R1.$c"
-done
+
+# (broken)
+## (partial) safe to initialize at build time
+#buildtimeinits_mc_server='BiomeManager BiomeManager$Provider DamageSource EntityAIBodyControl EntityBird EntityDamageSource EntityPose EntityPositionTypes EntityPositionTypes$a EntityPositionTypes$b EntityPositionTypes$Surface EntitySelector EntitySenses EntitySize EntitySlice EntityVillagerTrader EntityVillagerTrader$a EnumChatFormat IAttribute IBeaconBeam IBlockAccess IBlockFragilePlantElement IBlockState IBlockWaterlogged IChatBaseComponent IChunkLoader IChunkProvider ICollisionAccess ICommandListener ICompletionProvider IContainerProperties ICrafting ICrossbow IDispenseBehavior IDragonController IDyeable IDynamicTexture IEntityAccess IFluidContainer IFluidSource IHopper IInventory IInventoryHolder IInventoryListener IJumpable ILightAccess ILightEngine ILocationSource IMaterialIMerchant IMinecraftServer IMojangStatistics IMonster INamable INamableTileEntity IPlayerFileData IPosition IProgressUpdate IProjectile IRangedEntity IRecipe IRecipeComplex IReloadable IReloadableResourceManager IReloadListener IResourceManager IResourcePack IResourcePackListener IScoreboardCriteria IScoreboardCriteria$EnumScoreboardHealthDisplay ISource ISourceBlock IStructureAccess ITickable ITileEntity ITileEntityContainer ITileInventory IVectorPosition IWorldBorderListener IWorldBorderListener$a IWorldInventory IWorldReader IWorldWriter RecipeCrafting'
+#for c in $buildtimeinits_mc_server ;do
+#  buildtimeinits="$buildtimeinits net.minecraft.server.v1_15_R1.$c"
+#done
+
 # https://github.com/oracle/graal/issues/966
 # https://github.com/mageddo/graalvm-examples/blob/492a43bb83984e613a67230aa384198600d7152f/sqlite/build.gradle
 buildtimeinits="$buildtimeinits org.sqlite.JDBC org.sqlite.core.DB\$ProgressObserver org.sqlite.core.DB org.sqlite.core.NativeDB org.sqlite.ProgressHandler org.sqlite.Function org.sqlite.Function\$Aggregate org.sqlite.Function\$Window"
