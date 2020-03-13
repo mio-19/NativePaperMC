@@ -232,8 +232,8 @@ buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.eli
 # "-H:IncludeResourceBundles=joptsimple.ExceptionMessages" is for illegal CLI options
 # '-H:CCompilerOption="-Os"' is not effective
 native-image -cp mc.jar \
-  -H:+UseLowLatencyGC \
   --no-server -J-Xms5G -J-Xmx17G \
+  -H:+UseLowLatencyGC \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
   -Dfile.encoding=UTF-8 \
