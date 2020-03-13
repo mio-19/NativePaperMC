@@ -12,6 +12,8 @@ enable-rcon=true
 rcon.password=rconpwd
 rcon.port=25575
 EOF
+mkdir -p tmp/dist/plugins/AdvancedLogin
+echo 'PermsLogin: true' > tmp/dist/plugins/AdvancedLogin/config.yml # disable Auth
 
 rm dist/mc.jar
 cd tmp
