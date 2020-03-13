@@ -6,7 +6,12 @@ mkdir -p tmp/dist
 cp dist/mc.jar tmp/dist/
 echo 'eula=true' > tmp/dist/eula.txt
 # for FastLogin and Auth plugins and the bot
-echo 'online-mode=false' > tmp/dist/server.properties
+cat << 'EOF' > tmp/dist/server.properties
+online-mode=false
+enable-rcon=true
+rcon.password=rconpwd
+rcon.port=25575
+EOF
 
 rm dist/mc.jar
 cd tmp
@@ -43,6 +48,12 @@ EOF
 java -agentlib:native-image-agent=experimental-class-loader-support,config-output-dir=nativeimage-build-config -jar mc.jar &
 JAVA_PID="$!"
 
+git clone https://github.com/Tiiffi/mcrcon.git
+cd mcrcon
+git checkout b02201d689b3032bc681b28f175fd3d83d167293
+make
+make install
+cd ..
 git clone https://github.com/ammaraskar/pyCraft.git
 cd pyCraft
 git checkout ff9a0813b64a0afdf3cd089ad9000350bb4122bc
@@ -54,8 +65,8 @@ done
 echo "bot connect and disconnect in 10s ... (the bot will crash in 10s: 'EOFError: EOF when reading a line')"
 (sleep 10s|python3 start.py -s localhost -o -u SomeOFFLINE_Name) || true
 cd ..
-kill -s INT "$JAVA_PID"
-echo "SIGINT sent, wait until the server fully shutdown"
+mcrcon -H localhost -P 25575 -p rconpwd "say Server is stopping!" stop
+echo "'stop' command sent, wait until the server fully shutdown"
 wait "$JAVA_PID" || true
 
 # native-image-agent not tracing
