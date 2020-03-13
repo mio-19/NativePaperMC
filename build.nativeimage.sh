@@ -62,8 +62,9 @@ until [ -f ../plugins/TMPStopAfterServerLoadEvent/main.lua ];do
 echo "server not fully started, wait another 10s ..."
 sleep 10s
 done
-echo "bot connect and disconnect in 10s ... (the bot will crash in 10s: 'EOFError: EOF when reading a line')"
+echo "2 bot connect and disconnect in 10s ... (the bot will crash in 10s: 'EOFError: EOF when reading a line')"
 (sleep 10s|python3 start.py -s localhost -o -u SomeOFFLINE_Name) || true
+(sleep 10s|python3 start.py -s localhost -o -u Admin) || true # a online account
 cd ..
 mcrcon -H localhost -P 25575 -p rconpwd "say Server is stopping!" stop
 echo "'stop' command sent, wait until the server fully shutdown"
@@ -113,10 +114,12 @@ for(const x of [
 refl_add("com.google.common.cache.LocalCache$LocalLoadingCache",{
   // "methods": [{"name":"asMap"}] // (extends com.google.common.cache.LocalCache$LocalManualCache)
 })
-// FastLogin
+// FastLogin Begin
 refl_add("java.util.concurrent.CopyOnWriteArrayList",{
   "fields": [
     { "name": "lock", "allowWrite": true }]})
+refl_add("com.github.games647.craftapi.model.Profile", {"methods": [{"name":"<init>","parameterTypes": []}]})
+// FastLogin End
 // ProtocolSupport Begin
 // https://github.com/ProtocolSupport/ProtocolSupport/blob/2e129b436bc5e455bd3235ca5e4388f747bb345f/src/protocolsupport/zplatform/impl/spigot/network/handler/SpigotLoginListenerPlay.java and some other files in the same directory and https://github.com/ProtocolSupport/ProtocolSupport/blob/2e129b436bc5e455bd3235ca5e4388f747bb345f/src/protocolsupport/zplatform/impl/spigot/SpigotPacketFactory.java
 function lines_of(path) {
@@ -176,14 +179,16 @@ reflconf["org.bukkit.potion.PotionData"] = {
     { "name": "extended", "allowWrite": true }],
   // traced:
   "allDeclaredFields": true}
-reflconf["net.minecraft.server.v1_15_R1.ServerConnection"] = {
-  // not traced: (for ProtocolLib)
-  "fields": [
-    { "name": "listeningChannels", "allowWrite": true },
-    { "name": "pending", "allowWrite": true }],
-  // traced:
-  "allDeclaredFields": true,
-  "allPublicFields": true}
+// ProtocolLib Begin
+reflconf["net.minecraft.server.v1_15_R1.ServerConnection"]["fields"] = [
+  { "name": "listeningChannels", "allowWrite": true },
+  { "name": "pending", "allowWrite": true }]
+reflconf["io.netty.handler.codec.MessageToByteEncoder"]["fields"] = [
+  { "name": "matcher", "allowWrite": true }]
+// ProtocolLib End
+// Negativity
+refl_add("org.bukkit.craftbukkit.v1_15_R1.inventory.CraftContainer$1", {"methods": [{ "name": "getTitle" }]})
+refl_add("org.bukkit.craftbukkit.v1_15_R1.inventory.CraftInventoryView", {"methods": [{ "name": "getTitle" }]})
 
 const result = []
 for(const x in reflconf){
