@@ -54,7 +54,7 @@ done
 echo "bot connect and disconnect in 10s ... (the bot will crash in 10s: 'EOFError: EOF when reading a line')"
 (sleep 10s|python3 start.py -s localhost -o -u SomeOFFLINE_Name) || true
 cd ..
-kill -s SIGINT "$JAVA_PID"
+kill -s INT "$JAVA_PID"
 echo "SIGINT sent, wait until the server fully shutdown"
 wait "$JAVA_PID" || true
 
