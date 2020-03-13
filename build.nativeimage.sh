@@ -186,9 +186,10 @@ reflconf["net.minecraft.server.v1_15_R1.ServerConnection"]["fields"] = [
 reflconf["io.netty.handler.codec.MessageToByteEncoder"]["fields"] = [
   { "name": "matcher", "allowWrite": true }]
 // ProtocolLib End
-// Negativity
+// Negativity Begin
 refl_add("org.bukkit.craftbukkit.v1_15_R1.inventory.CraftContainer$1", {"methods": [{ "name": "getTitle" }]})
 refl_add("org.bukkit.craftbukkit.v1_15_R1.inventory.CraftInventoryView", {"methods": [{ "name": "getTitle" }]})
+// Negativity End
 
 const result = []
 for(const x in reflconf){
