@@ -56,7 +56,7 @@ git checkout b02201d689b3032bc681b28f175fd3d83d167293
 make
 make install
 cd ..
-mcron=mcrcon -H localhost -P 25575 -p rconpwd
+mcron="mcrcon -H localhost -P 25575 -p rconpwd"
 git clone https://github.com/ammaraskar/pyCraft.git
 cd pyCraft
 git checkout ff9a0813b64a0afdf3cd089ad9000350bb4122bc
@@ -232,8 +232,8 @@ buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.eli
 # "-H:IncludeResourceBundles=joptsimple.ExceptionMessages" is for illegal CLI options
 # '-H:CCompilerOption="-Os"' is not effective
 native-image -cp mc.jar \
-  --no-server -J-Xms5G -J-Xmx17G \
   -H:+UseLowLatencyGC \
+  --no-server -J-Xms5G -J-Xmx17G \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
   -Dfile.encoding=UTF-8 \
