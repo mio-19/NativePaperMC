@@ -64,7 +64,7 @@ sleep 10s
 done
 echo "2 bot connect and disconnect in 10s ... (the bot will crash in 10s: 'EOFError: EOF when reading a line')"
 (sleep 10s|python3 start.py -s localhost -o -u SomeOFFLINE_Name) || true
-(sleep 10s|python3 start.py -s localhost -o -u Admin) || true # a online account
+(sleep 10s|python3 start.py -s localhost -o -u admin) || true # a online account
 cd ..
 mcrcon -H localhost -P 25575 -p rconpwd "say Server is stopping!" stop
 echo "'stop' command sent, wait until the server fully shutdown"
