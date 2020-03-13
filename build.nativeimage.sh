@@ -117,6 +117,8 @@ for(const x of [
   "net.minecraft.server.v1_15_R1.WorldGenFeatureDefinedStructureJigsawPlacement",
   "net.minecraft.server.v1_15_R1.EntityTrackerEntry",
   "net.minecraft.server.v1_15_R1.PacketDebug",
+  "net.minecraft.server.v1_15_R1.IBlockDataHolder",
+  "net.minecraft.server.v1_15_R1.DynamicDeserializer",
   "net.minecraft.server.v1_15_R1.VillagePlaceSection",
   "net.minecraft.server.v1_15_R1.DefinedStructurePiece"]) {
   maybe_refl_add(x, {})}
