@@ -201,6 +201,11 @@ EOF
 buildtimeinits="org.apache.http.HttpEntityEnclosingRequest org.apache.http.conn.ManagedHttpClientConnection org.apache.http.Header org.apache.http.client.methods.CloseableHttpResponse org.apache.http.StatusLine org.apache.http.HttpResponse org.apache.http.protocol.HttpContext org.apache.http.ProtocolVersion org.apache.http.HttpRequest org.apache.http.HttpEntity org.apache.http.params.HttpParams"
 # (partial) safe to initialize at build time
 buildtimeinits="$buildtimeinits org.bukkit.Bukkit org.bukkit.Material org.bukkit.NamespacedKey org.bukkit.potion.PotionType org.bukkit.potion.PotionEffectType org.bukkit.potion.PotionEffectTypeWrapper org.bukkit.craftbukkit.v1_15_R1.util.CraftLegacy org.bukkit.scheduler.BukkitRunnable net.md_5.bungee.chat com.google.common.collect com.google.common.base com.google.gson com.google.gson.internal com.google.gson.internal.bind com.google.gson.reflect"
+# (partial) safe to initialize at build time
+buildtimeinits_mc_server='BiomeManager BiomeManager$Provider DamageSource EntityAIBodyControl EntityBird EntityDamageSource EntityPose EntityPositionTypes EntityPositionTypes$a EntityPositionTypes$b EntityPositionTypes$Surface EntitySelector EntitySenses EntitySize EntitySlice EntityVillagerTrader EntityVillagerTrader$a EnumChatFormat IAttribute IBeaconBeam IBlockAccess IBlockFragilePlantElement IBlockState IBlockWaterlogged IChatBaseComponent IChunkLoader IChunkProvider ICollisionAccess ICommandListener ICompletionProvider IContainerProperties ICrafting ICrossbow IDispenseBehavior IDragonController IDyeable IDynamicTexture IEntityAccess IFluidContainer IFluidSource IHopper IInventory IInventoryHolder IInventoryListener IJumpable ILightAccess ILightEngine ILocationSource IMaterialIMerchant IMinecraftServer IMojangStatistics IMonster INamable INamableTileEntity IPlayerFileData IPosition IProgressUpdate IProjectile IRangedEntity IRecipe IRecipeComplex IReloadable IReloadableResourceManager IReloadListener IResourceManager IResourcePack IResourcePackListener IScoreboardCriteria IScoreboardCriteria$EnumScoreboardHealthDisplay ISource ISourceBlock IStructureAccess ITickable ITileEntity ITileEntityContainer ITileInventory IVectorPosition IWorldBorderListener IWorldBorderListener$a IWorldInventory IWorldReader IWorldWriter RecipeCrafting'
+for c in $buildtimeinits_mc_server ;do
+  buildtimeinits="$buildtimeinits net.minecraft.server.v1_15_R1.$c"
+done
 # https://github.com/oracle/graal/issues/966
 # https://github.com/mageddo/graalvm-examples/blob/492a43bb83984e613a67230aa384198600d7152f/sqlite/build.gradle
 buildtimeinits="$buildtimeinits org.sqlite.JDBC org.sqlite.core.DB\$ProgressObserver org.sqlite.core.DB org.sqlite.core.NativeDB org.sqlite.ProgressHandler org.sqlite.Function org.sqlite.Function\$Aggregate org.sqlite.Function\$Window"
@@ -215,11 +220,11 @@ buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.eli
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
 # "-H:IncludeResourceBundles=joptsimple.ExceptionMessages" is for illegal CLI options
+# '-H:CCompilerOption="-Os"' is not effective
 native-image -cp mc.jar \
   --no-server -J-Xms5G -J-Xmx17G \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
-  -H:CCompilerOption="-Os" \
   -Dfile.encoding=UTF-8 \
   -H:IncludeResources='^[^.]*$|^.*\.[^.]{0,4}$|^.*\.[^.]{6,}$|^.*\.[^.]{0}[^c][^.]{4}$|^.*\.[^.]{1}[^l][^.]{3}$|^.*\.[^.]{2}[^a][^.]{2}$|^.*\.[^.]{3}[^s][^.]{1}$|^.*\.[^.]{4}[^s][^.]{0}$' \
   -H:IncludeResourceBundles=messages,joptsimple.HelpFormatterMessages,joptsimple.ExceptionMessages \
