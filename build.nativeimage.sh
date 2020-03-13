@@ -36,7 +36,7 @@ cat << 'EOF' > plugins/TMPStopAfterServerLoadEvent.lkt/main.lua
 plugin.registerEvent("ServerLoadEvent", function(...)
   -- local s = plugin.getServer()
   -- s:shutdown()
-  plugin.exportResource("main.lua") -- start the bot and then kill the server when the file appear
+  plugin.exportResource("main.lua", true) -- start the bot and then kill the server when the file appear
 end)
 EOF
 
