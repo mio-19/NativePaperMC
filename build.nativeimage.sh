@@ -65,13 +65,16 @@ until [ -f ../plugins/TMPStopAfterServerLoadEvent/main.lua ];do
 echo "server not fully started, wait another 10s ..."
 sleep 10s
 done
-echo "2 bot connect and disconnect in 10s ... (the bot will crash in 10s: 'EOFError: EOF when reading a line')"
+echo "2 bot connect and disconnect in 30s ... (the bot will crash in 30s: 'EOFError: EOF when reading a line')"
 (
 sleep 5s
-$mcron 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon wither' 'summon wither' 'summon pig'
+$mcron 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon minecraft:item ~ ~ ~ {Item:{id:"minecraft:coal",Count:1b}}' 'summon wither' 'summon wither' 'summon wither' 'summon pig' 'summon pig' 'summon pig'
 ) &
-(sleep 10s|python3 start.py -s localhost -o -u SomeOFFLINE_Name) || true
-(sleep 10s|python3 start.py -s localhost -o -u admin) || true # a online account
+(sleep 30s|python3 start.py -s localhost -o -u SomeOFFLINE_Name) &
+BOT1_PID="$!"
+(sleep 30s|python3 start.py -s localhost -o -u admin) & # a online account
+BOT2_PID="$!"
+wait "$BOT1_PID" "$BOT2_PID" || true
 cd ..
 $mcron "say Server is stopping!" stop
 echo "'stop' command sent, wait until the server fully shutdown"
@@ -230,10 +233,10 @@ buildtimeinits="$buildtimeinits com.elikill58.negativity.universal.Stats com.eli
 # "-H:IncludeResourceBundles=messages" is for EssentialsX
 # "-H:IncludeResourceBundles=joptsimple.HelpFormatterMessages" is for "--help"
 # "-H:IncludeResourceBundles=joptsimple.ExceptionMessages" is for illegal CLI options
-# '-H:CCompilerOption="-Os"' is not effective
 native-image -cp mc.jar \
   -H:+UseLowLatencyGC \
-  --no-server -J-Xms5G -J-Xmx17G \
+  -H:CCompilerOption="-Os" \
+  --no-server -J-Xms5G -J-Xmx15G \
   --verbose -H:+TraceClassInitialization -H:+ReportExceptionStackTraces -H:+PrintCompilation \
   --no-fallback \
   -Dfile.encoding=UTF-8 \
