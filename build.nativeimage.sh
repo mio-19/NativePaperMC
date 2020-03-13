@@ -47,7 +47,7 @@ git clone https://github.com/ammaraskar/pyCraft.git
 cd pyCraft
 git checkout ff9a0813b64a0afdf3cd089ad9000350bb4122bc
 pip3 install -r requirements.txt
-until [ -f plugins/TMPStopAfterServerLoadEvent/main.lua ];do
+until [ -f ../plugins/TMPStopAfterServerLoadEvent/main.lua ];do
 echo "server not fully started, wait another 10s ..."
 sleep 10s
 done
